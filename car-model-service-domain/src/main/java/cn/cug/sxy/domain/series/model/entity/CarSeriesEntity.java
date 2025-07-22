@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * @version 1.0
  * @Date 2025/7/21 15:08
@@ -41,5 +43,33 @@ public class CarSeriesEntity {
      * 车型系列描述
      */
     private String description;
+
+    public static CarSeriesEntity create(
+            SeriesCode seriesCode,
+            Brand brand,
+            String seriesName,
+            String description) {
+
+        if (seriesCode == null) {
+            throw new IllegalArgumentException("Series Code is required");
+        }
+        if (brand == null) {
+            throw new IllegalArgumentException("Brand is required");
+        }
+        if (seriesName == null || seriesName.isEmpty()) {
+            throw new IllegalArgumentException("Series Name is required");
+        }
+        if (description == null || description.isEmpty()) {
+            throw new IllegalArgumentException("Description is required");
+        }
+
+        return CarSeriesEntity.builder()
+                .seriesId(new SeriesId(UUID.randomUUID().toString()))
+                .seriesCode(seriesCode)
+                .brand(brand)
+                .seriesName(seriesName)
+                .description(description)
+                .build();
+    }
 
 }

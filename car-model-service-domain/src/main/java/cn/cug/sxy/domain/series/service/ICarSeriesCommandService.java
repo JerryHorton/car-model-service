@@ -17,7 +17,6 @@ public interface ICarSeriesCommandService {
     /**
      * 创建车型系列
      *
-     * @param seriesId    系列ID
      * @param seriesCode  系列编码
      * @param brand       品牌
      * @param seriesName  系列名称
@@ -26,7 +25,6 @@ public interface ICarSeriesCommandService {
      * @throws IllegalArgumentException 如果系列编码已存在
      */
     CarSeriesEntity createCarSeries(
-            SeriesId seriesId,
             SeriesCode seriesCode,
             Brand brand,
             String seriesName,
@@ -39,5 +37,13 @@ public interface ICarSeriesCommandService {
      * @return 是否删除成功
      */
     boolean removeCarSeries(SeriesId seriesId);
+
+    /**
+     * 更新车型系列
+     *
+     * @param carSeriesEntity 车型系列实体
+     * @return 更新数量
+     */
+    int updateCarSeries(CarSeriesEntity carSeriesEntity);
 
 }

@@ -4,7 +4,7 @@ import cn.cug.sxy.domain.series.model.entity.CarSeriesEntity;
 import cn.cug.sxy.domain.series.model.valobj.Brand;
 import cn.cug.sxy.domain.series.model.valobj.SeriesCode;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
-import cn.cug.sxy.infrastructure.dao.po.CarSeries;
+import cn.cug.sxy.infrastructure.dao.po.CarSeriesPO;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +26,7 @@ public class CarSeriesConverter {
      * @param po 持久化对象
      * @return 领域实体
      */
-    public static CarSeriesEntity toEntity(CarSeries po) {
+    public static CarSeriesEntity toEntity(CarSeriesPO po) {
         if (po == null) {
             return null;
         }
@@ -46,12 +46,12 @@ public class CarSeriesConverter {
      * @param entity 领域实体
      * @return 持久化对象
      */
-    public static CarSeries toPO(CarSeriesEntity entity) {
+    public static CarSeriesPO toPO(CarSeriesEntity entity) {
         if (entity == null) {
             return null;
         }
 
-        CarSeries po = new CarSeries();
+        CarSeriesPO po = new CarSeriesPO();
         po.setSeriesId(entity.getSeriesId().getId());
         po.setSeriesCode(entity.getSeriesCode().getCode());
         po.setBrand(entity.getBrand().getName());
@@ -67,7 +67,7 @@ public class CarSeriesConverter {
      * @param poList PO列表
      * @return Entity列表
      */
-    public static List<CarSeriesEntity> toEntityList(List<CarSeries> poList) {
+    public static List<CarSeriesEntity> toEntityList(List<CarSeriesPO> poList) {
         if (poList == null || poList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -84,7 +84,7 @@ public class CarSeriesConverter {
      * @param entityList Entity列表
      * @return PO列表
      */
-    public static List<CarSeries> toPOList(List<CarSeriesEntity> entityList) {
+    public static List<CarSeriesPO> toPOList(List<CarSeriesEntity> entityList) {
         if (entityList == null || entityList.isEmpty()) {
             return Collections.emptyList();
         }

@@ -1,6 +1,6 @@
 package cn.cug.sxy.infrastructure.dao;
 
-import cn.cug.sxy.infrastructure.dao.po.CarSeries;
+import cn.cug.sxy.infrastructure.dao.po.CarSeriesPO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -15,18 +15,20 @@ import java.util.List;
 @Mapper
 public interface ICarSeriesDao {
 
-    void insert(CarSeries carSeries);
+    void insert(CarSeriesPO carSeriesPO);
 
     int deleteBySeriesId(String seriesId);
 
-    CarSeries selectBySeriesId(String seriesId);
+    CarSeriesPO selectBySeriesId(String seriesId);
 
-    CarSeries selectBySeriesCode(String seriesCode);
+    CarSeriesPO selectBySeriesCode(String seriesCode);
 
-    List<CarSeries> selectBySeriesBrand(String seriesBrand);
+    List<CarSeriesPO> selectBySeriesBrand(String seriesBrand);
 
-    List<CarSeries> selectBySeriesNameLike(String seriesNameLike);
+    List<CarSeriesPO> selectBySeriesNameLike(String seriesNameLike);
 
-    List<CarSeries> selectAll();
+    List<CarSeriesPO> selectAll();
+
+    int update(CarSeriesPO carSeriesPO);
 
 }

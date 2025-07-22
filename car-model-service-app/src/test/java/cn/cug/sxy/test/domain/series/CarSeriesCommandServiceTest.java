@@ -27,7 +27,6 @@ public class CarSeriesCommandServiceTest {
     @Test
     public void test_createCarSeries() {
         CarSeriesEntity carSeriesEntity = carSeriesCommandService.createCarSeries(
-                new SeriesId("10002"),
                 new SeriesCode("ADW28sW2"),
                 new Brand("test"),
                 "测试系列002",

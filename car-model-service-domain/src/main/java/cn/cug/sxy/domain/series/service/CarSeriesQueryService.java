@@ -27,13 +27,23 @@ public class CarSeriesQueryService implements ICarSeriesQueryService {
     }
 
     @Override
-    public Optional<CarSeriesEntity> getById(SeriesId seriesId) {
-        return carSeriesRepository.findById(seriesId);
+    public CarSeriesEntity getById(SeriesId seriesId) {
+        Optional<CarSeriesEntity> carSeriesEntityOpt = carSeriesRepository.findById(seriesId);
+        if (!carSeriesEntityOpt.isPresent()) {
+            return null;
+        }
+
+        return carSeriesEntityOpt.get();
     }
 
     @Override
-    public Optional<CarSeriesEntity> getByCode(SeriesCode seriesCode) {
-        return carSeriesRepository.findByCode(seriesCode);
+    public CarSeriesEntity getByCode(SeriesCode seriesCode) {
+        Optional<CarSeriesEntity> carSeriesEntityOpt = carSeriesRepository.findByCode(seriesCode);
+        if (!carSeriesEntityOpt.isPresent()) {
+            return null;
+        }
+
+        return carSeriesEntityOpt.get();
     }
 
     @Override

@@ -23,7 +23,7 @@ public interface ICarSeriesQueryService {
      * @param seriesId 系列ID
      * @return 车型系列实体，如果不存在则返回空
      */
-    Optional<CarSeriesEntity> getById(SeriesId seriesId);
+    CarSeriesEntity getById(SeriesId seriesId);
 
     /**
      * 根据系列编码查询车型系列
@@ -31,7 +31,7 @@ public interface ICarSeriesQueryService {
      * @param seriesCode 系列编码
      * @return 车型系列实体，如果不存在则返回空
      */
-    Optional<CarSeriesEntity> getByCode(SeriesCode seriesCode);
+    CarSeriesEntity getByCode(SeriesCode seriesCode);
 
     /**
      * 根据品牌查询车型系列列表

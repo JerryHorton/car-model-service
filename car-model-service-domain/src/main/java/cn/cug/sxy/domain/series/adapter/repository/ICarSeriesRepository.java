@@ -79,4 +79,12 @@ public interface ICarSeriesRepository {
      */
     boolean existsByCode(SeriesCode seriesCode);
 
+    /**
+     * 更新车型系列
+     *
+     * @param carSeriesEntity 车型系列实体
+     * @return 更新的记录数
+     */
+    int update(CarSeriesEntity carSeriesEntity);
+
 }

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.cug.sxy.infrastructure.dao.ICarSeriesDao">
 
-    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.CarSeries">
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.CarSeriesPO">
         <id column="id" property="id"/>
         <result column="series_id" property="seriesId"/>
         <result column="series_code" property="seriesCode"/>
@@ -13,7 +13,7 @@
         <result column="updated_time" property="updatedTime"/>
     </resultMap>
 
-    <select id="selectBySeriesId" parameterType="java.lang.String" resultMap="dataMap">
+    <select id="selectById" parameterType="java.lang.String" resultMap="dataMap">
         select series_id, series_code, series_name, brand, description, created_time, updated_time
         from car_model_series
         where series_id = #{seriesId}
@@ -25,7 +25,7 @@
         where series_code = #{seriesCode}
     </select>
 
-    <select id="selectBySeriesBrand" parameterType="java.lang.String" resultMap="dataMap">
+    <select id="selectByBrand" parameterType="java.lang.String" resultMap="dataMap">
         select series_id, series_code, series_name, brand, description, created_time, updated_time
         from car_model_series
         where brand = #{brand}
@@ -42,11 +42,20 @@
         from car_model_series
     </select>
 
-    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.CarSeries">
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.CarSeriesPO">
         insert into car_model_series (series_id, series_code, series_name, brand, description,
                                       created_time, updated_time)
         values (#{seriesId}, #{seriesCode}, #{seriesName}, #{brand}, #{description}, now(), now())
     </insert>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.CarSeriesPO">
+        update car_model_series
+        set series_name  = #{seriesName},
+            brand        = #{brand},
+            description  = #{description},
+            updated_time = now()
+        where series_id = #{seriesId}
+    </update>
 
     <delete id="deleteBySeriesId" parameterType="java.lang.String">
         delete

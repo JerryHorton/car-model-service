@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.ICarModelDao">
+
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.CarModelPO">
+        <id column="id" property="id"/>
+        <result column="model_id" property="modelId"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+        <result column="brand" property="brand"/>
+        <result column="power_type" property="powerType"/>
+        <result column="status" property="status"/>
+        <result column="series_id" property="seriesId"/>
+        <result column="icon_path" property="iconPath"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <select id="countByModelCode" parameterType="string" resultType="int">
+        select count(*)
+        from car_models
+        where model_code = #{modelCode}
+    </select>
+
+    <select id="selectByModelCode" parameterType="string" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where model_code = #{modelCode}
+    </select>
+
+    <select id="selectByBrand" parameterType="java.lang.String" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where brand = #{brand}
+    </select>
+
+    <select id="selectByPowerType" parameterType="java.lang.String" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where power_type = #{powerType}
+    </select>
+
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where status = #{status}
+    </select>
+
+        <select id="selectBySeriesId" parameterType="java.lang.String" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where series_id = #{seriesId}
+    </select>
+
+    <select id="selectByModelNameLike" parameterType="java.lang.String" resultMap="dataMap">
+        select model_id,
+               model_code,
+               model_name,
+               brand,
+               power_type,
+               status,
+               series_id,
+               icon_path,
+               created_time,
+               updated_time
+        from car_models
+        where model_name like #{modelName}
+    </select>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.CarModelPO">
+        update car_models
+        set model_code   = #{modelCode},
+            model_name   = #{modelName},
+            brand        = #{brand},
+            power_type   = #{powerType},
+            status       = #{status},
+            series_id    = #{seriesId},
+            icon_path    = #{iconPath},
+            updated_time = now()
+        where model_id = #{modelId}
+    </update>
+
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.CarModelPO">
+        insert into car_models (model_id, model_code, model_name, brand, power_type, status, series_id, icon_path,
+                                created_time, updated_time)
+        values (#{modelId}, #{modelCode}, #{modelName}, #{brand}, #{powerType}, #{status}, #{seriesId}, #{iconPath},
+                #{createdTime}, #{updatedTime})
+    </insert>
+
+    <delete id="deleteByModelId" parameterType="java.lang.String">
+        delete
+        from car_models
+        where model_id = #{modelId}
+    </delete>
+
+</mapper>

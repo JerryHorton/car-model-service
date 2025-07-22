@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
  */
 
 @Data
-public class CarSeries {
+public class CarSeriesPO {
 
     /**
-     * 自增ID，主键
+     * 自增ID
      */
     private Integer id;
     /**
