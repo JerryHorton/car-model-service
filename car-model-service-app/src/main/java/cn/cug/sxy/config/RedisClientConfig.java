@@ -1,5 +1,6 @@
 package cn.cug.sxy.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.codec.JsonJacksonCodec;
@@ -21,9 +22,9 @@ import org.springframework.context.annotation.Configuration;
 public class RedisClientConfig {
 
     @Bean("redissonClient")
-    public RedissonClient redissonClient(RedisClientConfigProperties properties) {
+    public RedissonClient redissonClient(RedisClientConfigProperties properties, ObjectMapper objectMapper) {
         Config config = new Config();
-        config.setCodec(JsonJacksonCodec.INSTANCE);
+        config.setCodec(new JsonJacksonCodec(objectMapper));
         config.useSingleServer()
                 .setAddress("redis://" + properties.getHost() + ":" + properties.getPort())
                 .setConnectionPoolSize(properties.getPoolSize())

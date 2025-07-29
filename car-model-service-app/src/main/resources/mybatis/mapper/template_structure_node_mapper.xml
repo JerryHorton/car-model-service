@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.ITemplateStructureNodeDao">
+
+    <resultMap id="BaseResultMap" type="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        <id column="id" property="id"/>
+        <result column="template_id" property="templateId"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="node_code" property="nodeCode"/>
+        <result column="node_name" property="nodeName"/>
+        <result column="node_name_en" property="nodeNameEn"/>
+        <result column="node_type" property="nodeType"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="group_id" property="groupId"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="node_path" property="nodePath"/>
+        <result column="node_level" property="nodeLevel"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, template_id, parent_id, node_code, node_name, node_name_en, node_type, category_id, group_id,
+        sort_order, node_path, node_level, status, creator, created_time, updated_time
+    </sql>
+
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO structure_template_node (template_id, parent_id, node_code, node_name, node_name_en, node_type,
+                                             category_id, group_id,
+                                             sort_order, node_path, node_level, status, creator, created_time,
+                                             updated_time)
+        VALUES (#{templateId}, #{parentId}, #{nodeCode}, #{nodeName}, #{nodeNameEn}, #{nodeType}, #{categoryId},
+                #{groupId}, #{sortOrder}, #{nodePath}, #{nodeLevel}, #{status}, #{creator}, NOW(), NOW())
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO structure_template_node (
+        template_id, parent_id, node_code, node_name, node_name_en, node_type, category_id, group_id,
+        sort_order, node_path, node_level, status, creator, created_time, updated_time
+        )
+        VALUES
+        <foreach collection="nodeList" item="node" separator=",">
+            (
+            #{node.templateId}, #{node.parentId}, #{node.nodeCode}, #{node.nodeName}, #{node.nodeNameEn},
+            #{node.nodeType}, #{node.categoryId}, #{node.groupId}, #{node.sortOrder}, #{node.nodePath},
+            #{node.nodeLevel}, #{node.status}, #{node.creator}, NOW(), NOW()
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        UPDATE structure_template_node
+        SET node_name    = #{nodeName},
+            node_name_en = #{nodeNameEn},
+            node_type    = #{nodeType},
+            sort_order   = #{sortOrder},
+            node_path    = #{nodePath},
+            node_level   = #{nodeLevel},
+            status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        UPDATE structure_template_node
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateParentId" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        UPDATE structure_template_node
+        SET parent_id    = #{parentId},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSortOrder" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        UPDATE structure_template_node
+        SET sort_order   = #{sortOrder},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByTemplateId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectRootNodesByTemplateId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+        AND parent_id IS NULL
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByTemplateIdAndNodeType" resultMap="BaseResultMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+        AND node_type = #{nodeType}
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByTemplateIdAndStatus" resultMap="BaseResultMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+        AND status = #{status}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByTemplateIdAndNameLike" resultMap="BaseResultMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+        AND (node_name LIKE #{nodeName} OR node_name_en LIKE #{nodeNameEn}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByNodePathStartWith" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE node_path LIKE #{nodePath}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByNodePathLike" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template_node
+        WHERE node_path LIKE #{pathPattern}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <delete id="deleteById">
+        DELETE
+        FROM structure_template_node
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByTemplateId">
+        DELETE
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+    </delete>
+
+    <delete id="deleteByNodePathStartWith">
+        DELETE
+        FROM structure_template_node
+        WHERE node_path LIKE CONCAT(#{nodePath}, '%')
+    </delete>
+
+    <select id="countByParentId" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_template_node
+        WHERE parent_id = #{id}
+    </select>
+
+    <select id="countByTemplateId" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_template_node
+        WHERE template_id = #{templateId}
+    </select>
+
+</mapper>

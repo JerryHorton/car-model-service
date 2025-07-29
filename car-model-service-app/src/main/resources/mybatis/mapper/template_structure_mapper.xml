@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.ITemplateStructureDao">
+
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO">
+        <id column="id" property="id"/>
+        <result column="template_code" property="templateCode"/>
+        <result column="template_name" property="templateName"/>
+        <result column="template_desc" property="templateDesc"/>
+        <result column="version" property="version"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        template_code,
+        template_name,
+        template_desc,
+        version,
+        status,
+        creator,
+        created_time,
+        updated_time
+    </sql>
+
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO structure_template (template_code, template_name, template_desc, version, status, creator,
+                                        created_time, updated_time)
+        VALUES (#{templateCode}, #{templateName}, #{templateDesc}, #{version}, #{status}, #{creator},
+                NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO">
+        UPDATE structure_template
+        SET template_name = #{templateName},
+            template_desc = #{templateDesc},
+            version       = #{version},
+            status        = #{status},
+            updated_time  = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO">
+        UPDATE structure_template
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="dataMap" parameterType="java.lang.Long">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByTemplateCode" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE template_code = #{templateCode}
+        ORDER BY version DESC
+    </select>
+
+    <select id="selectByTemplateCodeAndVersion" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO"
+            resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE template_code = #{templateCode}
+        AND version = #{version}
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestVersionByCode" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE template_code = #{templateCode}
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE status = #{status}
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByNameLike" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE template_name LIKE #{nameKeyword}
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByCondition" parameterType="cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO"
+            resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_template
+        WHERE 1 = 1
+        <if test="templateCode != null and templateCode.length() > 0">
+            AND template_code = #{templateCode}
+        </if>
+        <if test="status != null and status.length() > 0">
+            AND status = #{status}
+        </if>
+        <if test="templateName != null and templateName.length() > 0">
+            AND template_name LIKE #{templateName}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="countByTemplateCode" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_template
+        WHERE template_code = #{templateCode}
+    </select>
+
+    <select id="countByTemplateCodeAndVersion" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_template
+        WHERE template_code = #{templateCode}
+          AND version = #{version}
+    </select>
+
+</mapper>
