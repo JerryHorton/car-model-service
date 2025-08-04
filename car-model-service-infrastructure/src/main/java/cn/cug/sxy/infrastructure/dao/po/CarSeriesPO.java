@@ -17,11 +17,7 @@ public class CarSeriesPO {
     /**
      * 自增ID
      */
-    private Integer id;
-    /**
-     * 系列ID
-     */
-    private String seriesId;
+    private Long id;
     /**
      * 车型系列编码，唯一
      */

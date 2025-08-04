@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * @version 1.0
  * @Date 2025/7/29 16:41
- * @Description 模板查询DTO
+ * @Description 模板查询请求DTO
  * @Author jerryhotton
  */
 

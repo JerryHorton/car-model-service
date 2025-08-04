@@ -35,6 +35,9 @@ public class CarSeriesRepository extends AbstractRepository implements ICarSerie
     public void save(CarSeriesEntity carSeriesEntity) {
         CarSeriesPO carSeriesPO = CarSeriesConverter.toPO(carSeriesEntity);
         carSeriesDao.insert(carSeriesPO);
+        if (carSeriesPO.getId() != null && carSeriesEntity.getId() == null) {
+            carSeriesEntity.setId(new SeriesId(carSeriesPO.getId()));
+        }
     }
 
     @Override

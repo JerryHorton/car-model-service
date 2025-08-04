@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -26,7 +27,7 @@ public class CarSeriesEntity {
     /**
      * 系列ID
      */
-    private SeriesId seriesId;
+    private SeriesId id;
     /**
      * 车型系列编码，唯一
      */
@@ -64,7 +65,6 @@ public class CarSeriesEntity {
         }
 
         return CarSeriesEntity.builder()
-                .seriesId(new SeriesId(UUID.randomUUID().toString()))
                 .seriesCode(seriesCode)
                 .brand(brand)
                 .seriesName(seriesName)

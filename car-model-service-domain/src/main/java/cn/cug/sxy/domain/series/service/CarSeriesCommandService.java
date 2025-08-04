@@ -59,7 +59,7 @@ public class CarSeriesCommandService implements ICarSeriesCommandService {
 
     @Override
     public int updateCarSeries(CarSeriesEntity carSeriesEntity) {
-        SeriesId seriesId = carSeriesEntity.getSeriesId();
+        SeriesId seriesId = carSeriesEntity.getId();
         logger.info("更新车系 seriesId={}", seriesId);
         int updateCount = carSeriesRepository.update(carSeriesEntity);
         logger.info("更新车系成功 seriesId={}, updateCount={}", seriesId, updateCount);

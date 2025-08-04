@@ -17,11 +17,7 @@ public class CarModelPO {
     /**
      * 自增ID
      */
-    private Integer id;
-    /**
-     * 车型ID
-     */
-    private String modelId;
+    private Long id;
     /**
      * 车型编码
      */
@@ -45,7 +41,7 @@ public class CarModelPO {
     /**
      * 车型系列ID
      */
-    private String seriesId;
+    private Long seriesId;
     /**
      * 车型图标文件路径
      */

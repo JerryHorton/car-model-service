@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IInstanceStructureNodeDao">
+
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        <id column="id" property="id"/>
+        <result column="instance_id" property="instanceId"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="node_type" property="nodeType"/>
+        <result column="node_code" property="nodeCode"/>
+        <result column="node_name" property="nodeName"/>
+        <result column="node_name_en" property="nodeNameEn"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="group_id" property="groupId"/>
+        <result column="usage_id" property="usageId"/>
+        <result column="node_path" property="nodePath"/>
+        <result column="node_level" property="nodeLevel"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, instance_id, parent_id, node_type, node_code, node_name, node_name_en, sort_order,
+        category_id, group_id, usage_id, node_path, node_level, status, creator, created_time, updated_time
+    </sql>
+
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO structure_instance_node (instance_id, parent_id, node_type, node_code, node_name, node_name_en,
+                                             sort_order,
+                                             category_id, group_id, usage_id, node_path, node_level, status, creator,
+                                             created_time, updated_time)
+        VALUES (#{instanceId}, #{parentId}, #{nodeType}, #{nodeCode}, #{nodeName}, #{nodeNameEn}, #{sortOrder},
+                #{categoryId}, #{groupId}, #{usageId}, #{nodePath}, #{nodeLevel}, #{status}, #{creator}, NOW(),
+                NOW())
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO structure_instance_node (
+        instance_id, parent_id, node_type, node_code, node_name, node_name_en, sort_order,
+        category_id, group_id, usage_id, node_path, node_level, status, creator, created_time, updated_time
+        ) VALUES
+        <foreach collection="nodeList" item="node" separator=",">
+            (
+            #{node.instanceId}, #{node.parentId}, #{node.nodeType}, #{node.nodeCode}, #{node.nodeName},
+            #{node.nodeNameEn}, #{node.sortOrder},
+            #{node.categoryId}, #{node.groupId}, #{node.usageId}, #{node.nodePath}, #{node.nodeLevel}, #{node.status},
+            #{node.creator}, NOW(), NOW()
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        UPDATE structure_instance_node
+        SET node_name    = #{nodeName},
+            node_name_en = #{nodeNameEn},
+            node_type    = #{nodeType},
+            sort_order   = #{sortOrder},
+            category_id  = #{categoryId},
+            group_id     = #{groupId},
+            usage_id     = #{usageId},
+            node_path    = #{nodePath},
+            node_level   = #{nodeLevel},
+            status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        UPDATE structure_instance_node
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateParentId" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        UPDATE structure_instance_node
+        SET parent_id    = #{parentId},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSortOrder" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        UPDATE structure_instance_node
+        SET sort_order   = #{sortOrder},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByInstanceId" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectRootNodesByInstanceId" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+        AND parent_id IS NULL
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByParentId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByInstanceIdAndNodeType" resultMap="dataMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+        AND node_type = #{nodeType}
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByInstanceIdAndStatus" resultMap="dataMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+        AND status = #{status}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByInstanceIdAndNameLike" resultMap="dataMap"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+        AND (node_name LIKE #{nodeName} OR node_name_en LIKE #{nodeNameEn})
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByNodePathStartWith" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE node_path LIKE #{nodePath}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <select id="selectByNodePathLike" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE node_path LIKE #{pathPattern}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM structure_instance_node
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByInstanceId" parameterType="java.lang.Long">
+        DELETE
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+    </delete>
+
+    <delete id="deleteByNodePathStartWith" parameterType="java.lang.String">
+        DELETE
+        FROM structure_instance_node
+        WHERE node_path LIKE #{nodePath}
+    </delete>
+
+    <select id="countByParentId" parameterType="java.lang.Long" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_instance_node
+        WHERE parent_id = #{parentId}
+    </select>
+
+    <select id="countByInstanceId" parameterType="java.lang.Long" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_instance_node
+        WHERE instance_id = #{instanceId}
+    </select>
+</mapper>

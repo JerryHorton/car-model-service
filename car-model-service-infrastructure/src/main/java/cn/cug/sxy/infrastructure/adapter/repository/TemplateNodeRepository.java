@@ -1,16 +1,15 @@
 package cn.cug.sxy.infrastructure.adapter.repository;
 
 import cn.cug.sxy.domain.structure.adapter.repository.ITemplateNodeRepository;
+import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
-import cn.cug.sxy.domain.structure.model.valobj.NodeType;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
-import cn.cug.sxy.domain.structure.model.valobj.TemplateId;
-import cn.cug.sxy.domain.structure.model.valobj.TemplateNodeId;
+import cn.cug.sxy.domain.structure.model.valobj.*;
 import cn.cug.sxy.infrastructure.converter.TemplateStructureNodeConverter;
 import cn.cug.sxy.infrastructure.dao.ITemplateStructureNodeDao;
 import cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO;
 import cn.cug.sxy.infrastructure.redis.IRedisService;
 import cn.cug.sxy.types.common.Constants;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @version 1.0
@@ -59,9 +57,7 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         if (CollectionUtils.isEmpty(nodes)) {
             return 0;
         }
-        List<TemplateStructureNodePO> poList = nodes.stream()
-                .map(TemplateStructureNodeConverter::toPO)
-                .collect(Collectors.toList());
+        List<TemplateStructureNodePO> poList = TemplateStructureNodeConverter.toPOList(nodes);
         int result = templateStructureNodeDao.batchInsert(poList);
         // 更新实体ID
         for (int i = 0; i < poList.size(); i++) {
@@ -83,7 +79,6 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         if (node == null || node.getId() == null) {
             return 0;
         }
-        node.setUpdatedTime(LocalDateTime.now());
         TemplateStructureNodePO po = TemplateStructureNodeConverter.toPO(node);
         int result = templateStructureNodeDao.update(po);
         // 清除相关缓存
@@ -112,15 +107,15 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         if (nodeId == null) {
             return 0;
         }
-        Long parentIdValue = parentId != null ? parentId.getId() : null;
+        // 清除相关缓存
+        clearCacheForNodeMove(nodeId, parentId);
+        // 更新父节点ID
         TemplateStructureNodePO templateStructureNodePOReq = new TemplateStructureNodePO();
+        Long parentIdValue = parentId != null ? parentId.getId() : null;
         templateStructureNodePOReq.setId(nodeId.getId());
         templateStructureNodePOReq.setParentId(parentIdValue);
-        int result = templateStructureNodeDao.updateParentId(templateStructureNodePOReq);
-        // 清除相关缓存
-        clearCacheForNodeMove(nodeId);
 
-        return result;
+        return templateStructureNodeDao.updateParentId(templateStructureNodePOReq);
     }
 
     @Override
@@ -234,9 +229,12 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         }
         // 转义特殊字符
         nameKeyword = nameKeyword.replace("%", "\\%").replace("_", "\\_");
+        // 通配符
+        nameKeyword = "%" + nameKeyword + "%";
         TemplateStructureNodePO templateStructureNodePOReq = new TemplateStructureNodePO();
         templateStructureNodePOReq.setId(templateId.getId());
-        templateStructureNodePOReq.setNodeName("%" + nameKeyword + "%");
+        templateStructureNodePOReq.setNodeName(nameKeyword);
+        templateStructureNodePOReq.setNodeNameEn(nameKeyword);
         List<TemplateStructureNodePO> poList = templateStructureNodeDao.selectByTemplateIdAndNameLike(templateStructureNodePOReq);
         if (CollectionUtils.isEmpty(poList)) {
             return Collections.emptyList();
@@ -256,40 +254,23 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
             return Collections.emptyList();
         }
         StructureTemplateNodeEntity rootNode = rootNodeOpt.get();
-        String rootPath = rootNode.getNodePath();
-        if (rootPath == null) {
-            // 如果路径为空，则回退到传统方式
-            return findSubTreeTraditional(rootNodeId);
+        // 如果节点有路径，使用路径查询子树
+        if (StringUtils.isNotBlank(rootNode.getNodePath())) {
+            return findByPathStartingWith(rootNode.getNodePath());
         }
-        // 使用路径查询子树
-        List<StructureTemplateNodeEntity> subTree = new ArrayList<>();
-        // 添加根节点自身
-        subTree.add(rootNode);
-        // 添加所有子节点
-        List<StructureTemplateNodeEntity> children = findByPathStartingWith(rootPath + "-");
-        subTree.addAll(children);
-
-        return subTree;
-    }
-
-    private List<StructureTemplateNodeEntity> findSubTreeTraditional(TemplateNodeId rootNodeId) {
-        // 传统递归方式查询子树，当路径不可用时使用
+        // 否则使用递归查询
         List<StructureTemplateNodeEntity> result = new ArrayList<>();
-        // 添加根节点
-        Optional<StructureTemplateNodeEntity> rootNodeOpt = findById(rootNodeId);
-        if (!rootNodeOpt.isPresent()) {
-            return result;
-        }
-        StructureTemplateNodeEntity rootNode = rootNodeOpt.get();
         result.add(rootNode);
-        // 递归添加子节点
+        // 查询直接子节点
         List<StructureTemplateNodeEntity> children = findByParentId(rootNodeId);
+        // 递归查询每个子节点的子树
         for (StructureTemplateNodeEntity child : children) {
-            result.addAll(findSubTreeTraditional(child.getId()));
+            result.addAll(findSubTree(child.getId()));
         }
 
         return result;
     }
+
 
     @Override
     public List<StructureTemplateNodeEntity> findByPathStartingWith(String pathPrefix) {
@@ -353,12 +334,12 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         }
         StructureTemplateNodeEntity rootNode = rootNodeOpt.get();
         int result;
-        if (rootNode.getNodePath() != null) {
-            // 使用路径删除子树
+        if (StringUtils.isNotBlank(rootNode.getNodePath())) {
             result = templateStructureNodeDao.deleteByNodePathStartWith(rootNode.getNodePath());
         } else {
-            // 回退到传统方式
-            result = deleteSubTreeTraditional(rootNodeId);
+            // 否则先删除所有子节点，再删除自身
+            result = deleteChildrenRecursively(rootNodeId);
+            result += templateStructureNodeDao.deleteById(rootNodeId.getId());
         }
         // 清除相关缓存
         if (rootNode.getTemplateId() != null) {
@@ -368,16 +349,18 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         return result;
     }
 
-    private int deleteSubTreeTraditional(TemplateNodeId rootNodeId) {
+    /**
+     * 递归删除子节点
+     */
+    private int deleteChildrenRecursively(TemplateNodeId parentId) {
         int count = 0;
-        // 查询所有子节点
-        List<StructureTemplateNodeEntity> children = findByParentId(rootNodeId);
-        // 递归删除子节点
+        List<StructureTemplateNodeEntity> children = findByParentId(parentId);
         for (StructureTemplateNodeEntity child : children) {
-            count += deleteSubTreeTraditional(child.getId());
+            count += deleteChildrenRecursively(child.getId());
+            count += templateStructureNodeDao.deleteById(child.getId().getId());
+            // 删除缓存
+            clearCache(child);
         }
-        // 删除根节点
-        count += templateStructureNodeDao.deleteById(rootNodeId.getId());
 
         return count;
     }
@@ -436,7 +419,7 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
     /**
      * 清除节点移动相关的缓存
      */
-    private void clearCacheForNodeMove(TemplateNodeId nodeId) {
+    private void clearCacheForNodeMove(TemplateNodeId nodeId, TemplateNodeId oldParentNodeId) {
         if (nodeId == null) {
             return;
         }
@@ -446,18 +429,18 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
             return;
         }
         StructureTemplateNodeEntity node = nodeOpt.get();
-
         // 清除节点缓存
         redisService.remove(getNodeByIdCacheKey(nodeId.getId()));
-
         // 清除模板节点列表缓存
         if (node.getTemplateId() != null) {
             redisService.remove(getNodesByTemplateIdCacheKey(node.getTemplateId().getId()));
         }
-
         // 清除原父节点和新父节点的子节点列表缓存
         if (node.getParentId() != null) {
             redisService.remove(getNodesByParentIdCacheKey(node.getParentId().getId()));
+        }
+        if (oldParentNodeId != null) {
+            redisService.remove(getNodesByParentIdCacheKey(oldParentNodeId.getId()));
         }
     }
 
@@ -468,12 +451,10 @@ public class TemplateNodeRepository extends AbstractRepository implements ITempl
         if (node == null) {
             return;
         }
-
         // 清除模板节点列表缓存
         if (node.getTemplateId() != null) {
             redisService.remove(getNodesByTemplateIdCacheKey(node.getTemplateId().getId()));
         }
-
         // 清除父节点的子节点列表缓存
         if (node.getParentId() != null) {
             redisService.remove(getNodesByParentIdCacheKey(node.getParentId().getId()));

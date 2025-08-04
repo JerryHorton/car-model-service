@@ -36,7 +36,7 @@ public interface ICarModelDao {
      * @param modelId 车型ID
      * @return 影响的行数
      */
-    int deleteByModelId(String modelId);
+    int deleteByModelId(Long modelId);
 
     /**
      * 根据车型ID查询车型记录
@@ -44,7 +44,7 @@ public interface ICarModelDao {
      * @param modelId 车型ID
      * @return 车型PO
      */
-    CarModelPO selectByModelId(String modelId);
+    CarModelPO selectByModelId(Long modelId);
 
     /**
      * 根据车型编码查询车型记录
@@ -84,7 +84,7 @@ public interface ICarModelDao {
      * @param seriesId 车型系列ID
      * @return 车型PO列表
      */
-    List<CarModelPO> selectBySeriesId(String seriesId);
+    List<CarModelPO> selectBySeriesId(Long seriesId);
 
     /**
      * 根据车型名称模糊查询车型记录列表

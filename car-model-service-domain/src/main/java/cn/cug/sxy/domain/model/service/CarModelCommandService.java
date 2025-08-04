@@ -49,7 +49,7 @@ public class CarModelCommandService implements ICarModelCommandService {
                 description
         );
         carModelRepository.save(carModelEntity);
-        logger.info("车型创建成功，modelId={}", carModelEntity.getModelId());
+        logger.info("车型创建成功，modelId={}", carModelEntity.getId().getId());
 
         return carModelEntity;
     }

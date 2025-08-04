@@ -1,8 +1,10 @@
 package cn.cug.sxy.domain.structure.model.valobj;
 
+import cn.cug.sxy.types.exception.AppException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @version 1.0
@@ -19,7 +21,7 @@ public class InstanceCode {
     private final String code;
 
     public InstanceCode(String code) {
-        if (code == null || code.trim().isEmpty()) {
+        if (StringUtils.isBlank(code)) {
             throw new IllegalArgumentException("Instance code cannot be null or empty");
         }
         this.code = code;

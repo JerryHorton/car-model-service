@@ -17,9 +17,9 @@ public interface ICarSeriesDao {
 
     void insert(CarSeriesPO carSeriesPO);
 
-    int deleteBySeriesId(String seriesId);
+    int deleteBySeriesId(Long seriesId);
 
-    CarSeriesPO selectBySeriesId(String seriesId);
+    CarSeriesPO selectBySeriesId(Long seriesId);
 
     CarSeriesPO selectBySeriesCode(String seriesCode);
 

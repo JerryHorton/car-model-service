@@ -36,7 +36,11 @@ public class CarModelRepository extends AbstractRepository implements ICarModelR
 
     @Override
     public void save(CarModelEntity carModelEntity) {
-        carModelDao.insert(CarModelConverter.toPO(carModelEntity));
+        CarModelPO po = CarModelConverter.toPO(carModelEntity);
+        carModelDao.insert(po);
+        if (po.getId() != null && carModelEntity.getId() == null) {
+            carModelEntity.setId(new ModelId(po.getId()));
+        }
     }
 
     @Override

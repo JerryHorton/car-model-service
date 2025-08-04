@@ -113,7 +113,6 @@ public class TemplateService implements ITemplateService {
         // 创建新版本模板
         StructureTemplateEntity newTemplate = StructureTemplateEntity.create(
                 templateCode, sourceTemplate.getTemplateName(), sourceTemplate.getTemplateDesc(), newVersion, creator);
-
         templateRepository.save(newTemplate);
         // 复制节点结构
         copyNodeStructure(sourceTemplateId, newTemplate.getId(), creator);
@@ -164,9 +163,10 @@ public class TemplateService implements ITemplateService {
             node = StructureTemplateNodeEntity.createRoot(
                     templateId, nodeType, nodeCode, nodeName, nodeNameEn, sortOrder, creator);
             node.setCategoryId(categoryIdValue);
+            node.setGroupId(groupIdValue);
             // 保存节点
             templateNodeRepository.save(node);
-            // 设置根节点路径
+            // 设置根节点路径和层级
             if (node.getId() != null) {
                 String nodePath = String.valueOf(node.getId().getId());
                 node.updatePathAndLevel(nodePath, 0);
@@ -184,6 +184,7 @@ public class TemplateService implements ITemplateService {
             // 创建子节点
             node = StructureTemplateNodeEntity.createChild(
                     templateId, parentNodeId, nodeType, nodeCode, nodeName, nodeNameEn, sortOrder, creator);
+            node.setCategoryId(categoryIdValue);
             node.setGroupId(groupIdValue);
             // 保存节点
             templateNodeRepository.save(node);
@@ -234,6 +235,11 @@ public class TemplateService implements ITemplateService {
         }
         StructureTemplateNodeEntity node = nodeOpt.get();
         String oldPath = node.getNodePath();
+        TemplateNodeId oldParentId = node.getParentId();
+        if ((newParentId == null && oldParentId == null) ||
+                (newParentId != null && newParentId.equals(oldParentId))) {
+            return adjustNodeOrder(node, sortOrder);
+        }
         // 如果指定了新父节点，确保它存在
         if (newParentId != null) {
             Optional<StructureTemplateNodeEntity> parentNodeOpt = templateNodeRepository.findById(newParentId);
@@ -270,12 +276,8 @@ public class TemplateService implements ITemplateService {
             // 更新所有子节点的路径和层级
             updateSubtreePathAndLevel(oldPath, newPath, node.getNodeLevel(), 0);
         }
-        // 如果指定了排序序号，更新排序
-        if (sortOrder != null) {
-            templateNodeRepository.updateSortOrder(nodeId, sortOrder);
-        }
-
-        return true;
+        // 调整排序
+        return adjustNodeOrder(node, sortOrder);
     }
 
     @Override
@@ -324,11 +326,11 @@ public class TemplateService implements ITemplateService {
             throw new IllegalArgumentException("模板ID不能为空");
         }
         // 先删除所有节点
-        templateNodeRepository.deleteByTemplateId(templateId);
+        int deleteCount = templateNodeRepository.deleteByTemplateId(templateId);
         // 再删除模板（逻辑删除，将状态更新为删除）
         int result = templateRepository.deleteById(templateId);
 
-        return result > 0;
+        return result > 0 && deleteCount > 0;
     }
 
     @Override
@@ -395,9 +397,6 @@ public class TemplateService implements ITemplateService {
             if (rootNodeCount == 0) {
                 issues.add("模板没有根节点");
                 result.put("valid", false);
-            } else if (rootNodeCount > 1) {
-                issues.add("模板有多个根节点，应该只有一个");
-                result.put("valid", false);
             } else {
                 // 检查节点引用的完整性
                 Set<TemplateNodeId> allNodeIds = nodes.stream()
@@ -445,7 +444,6 @@ public class TemplateService implements ITemplateService {
         if (nodeId == null) {
             throw new IllegalArgumentException("节点ID不能为空");
         }
-
         // 删除节点及其子节点
         return templateNodeRepository.deleteSubTree(nodeId);
     }
@@ -456,7 +454,6 @@ public class TemplateService implements ITemplateService {
         if (templateId == null) {
             throw new IllegalArgumentException("模板ID不能为空");
         }
-
         // 更新状态
         int result = templateRepository.updateStatus(templateId, Status.ENABLED);
 
@@ -481,7 +478,6 @@ public class TemplateService implements ITemplateService {
         if (templateId == null) {
             return null;
         }
-
         Optional<StructureTemplateEntity> structureTemplateEntityOpt = templateRepository.findById(templateId);
         if (!structureTemplateEntityOpt.isPresent()) {
             return null;
@@ -508,6 +504,7 @@ public class TemplateService implements ITemplateService {
         if (parentNodeId == null) {
             return Collections.emptyList();
         }
+
         return templateNodeRepository.findByParentId(parentNodeId);
     }
 
@@ -516,6 +513,7 @@ public class TemplateService implements ITemplateService {
         if (rootNodeId == null) {
             return Collections.emptyList();
         }
+
         return templateNodeRepository.findSubTree(rootNodeId);
     }
 
@@ -528,15 +526,12 @@ public class TemplateService implements ITemplateService {
         if (CollectionUtils.isEmpty(sourceNodes)) {
             return;
         }
-
         // 构建节点ID映射关系（旧ID -> 新节点）
         Map<TemplateNodeId, StructureTemplateNodeEntity> oldToNewNodeMap = new HashMap<>();
-
         // 先复制所有根节点
         List<StructureTemplateNodeEntity> rootNodes = sourceNodes.stream()
                 .filter(node -> node.getParentId() == null)
                 .collect(Collectors.toList());
-
         for (StructureTemplateNodeEntity rootNode : rootNodes) {
             StructureTemplateNodeEntity newRootNode = StructureTemplateNodeEntity.createRoot(
                     targetTemplateId,
@@ -547,32 +542,34 @@ public class TemplateService implements ITemplateService {
                     rootNode.getSortOrder(),
                     creator
             );
-
+            newRootNode.setCategoryId(rootNode.getCategoryId());
+            newRootNode.setGroupId(rootNode.getGroupId());
             templateNodeRepository.save(newRootNode);
+            // 设置根节点路径和层级
+            if (newRootNode.getId() != null) {
+                String nodePath = String.valueOf(newRootNode.getId().getId());
+                newRootNode.updatePathAndLevel(nodePath, 0);
+                templateNodeRepository.update(newRootNode);
+            }
             oldToNewNodeMap.put(rootNode.getId(), newRootNode);
         }
-
         // 按层次复制子节点
         boolean hasNewNodes = true;
         Set<TemplateNodeId> processedNodeIds = new HashSet<>(rootNodes.stream()
                 .map(StructureTemplateNodeEntity::getId)
                 .collect(Collectors.toSet()));
-
         while (hasNewNodes) {
             hasNewNodes = false;
-
             for (StructureTemplateNodeEntity sourceNode : sourceNodes) {
                 // 跳过已处理的节点
                 if (processedNodeIds.contains(sourceNode.getId())) {
                     continue;
                 }
-
                 // 如果父节点已处理，则可以处理当前节点
                 TemplateNodeId parentId = sourceNode.getParentId();
                 if (parentId != null && processedNodeIds.contains(parentId)) {
                     // 获取新的父节点
                     StructureTemplateNodeEntity newParentNode = oldToNewNodeMap.get(parentId);
-
                     // 创建新节点
                     StructureTemplateNodeEntity newNode = StructureTemplateNodeEntity.createChild(
                             targetTemplateId,
@@ -584,14 +581,72 @@ public class TemplateService implements ITemplateService {
                             sourceNode.getSortOrder(),
                             creator
                     );
-
+                    newNode.setCategoryId(sourceNode.getCategoryId());
+                    newNode.setGroupId(sourceNode.getGroupId());
                     templateNodeRepository.save(newNode);
+                    // 设置子节点路径和层级
+                    if (newNode.getId() != null) {
+                        String parentPath = newParentNode.getNodePath();
+                        String nodePath = parentPath + "-" + newNode.getId().getId();
+                        int nodeLevel = newParentNode.getNodeLevel() + 1;
+                        newNode.updatePathAndLevel(nodePath, nodeLevel);
+                        templateNodeRepository.update(newNode);
+                    }
                     oldToNewNodeMap.put(sourceNode.getId(), newNode);
                     processedNodeIds.add(sourceNode.getId());
                     hasNewNodes = true;
                 }
             }
         }
+    }
+
+    /**
+     *  调整节点排序
+     */
+    private boolean adjustNodeOrder(StructureTemplateNodeEntity node, Integer targetSortOrder) {
+        // 获取同级节点列表（不包括当前节点）
+        List<StructureTemplateNodeEntity> siblingNodes;
+        if (node.getParentId() == null) {
+            // 根节点
+            siblingNodes = templateNodeRepository.findRootNodesByTemplateId(node.getTemplateId())
+                    .stream()
+                    .filter(n -> !n.getId().equals(node.getId()))
+                    .collect(Collectors.toList());
+        } else {
+            // 子节点
+            siblingNodes = templateNodeRepository.findByParentId(node.getParentId())
+                    .stream()
+                    .filter(n -> !n.getId().equals(node.getId()))
+                    .collect(Collectors.toList());
+        }
+        // 如果没有指定排序号，放到最后
+        if (targetSortOrder == null) {
+            int maxSortOrder = siblingNodes.isEmpty() ? 0 :
+                    siblingNodes.stream().mapToInt(StructureTemplateNodeEntity::getSortOrder).max().orElse(0);
+            targetSortOrder = maxSortOrder + 1;
+        }
+        // 更新当前节点的排序号
+        node.setSortOrder(targetSortOrder);
+        templateNodeRepository.update(node);
+        // 调整其他节点的排序号
+        // 1. 先按排序号升序排列
+        siblingNodes.sort(Comparator.comparing(StructureTemplateNodeEntity::getSortOrder));
+        // 2. 重新分配排序号
+        int currentOrder = 1;
+        for (StructureTemplateNodeEntity sibling : siblingNodes) {
+            // 如果当前分配的序号等于目标序号，跳过这个序号
+            if (currentOrder == targetSortOrder) {
+                currentOrder++;
+            }
+            // 只有当排序号需要变更时才更新
+            if (sibling.getSortOrder() != currentOrder) {
+                sibling.setSortOrder(currentOrder);
+                templateNodeRepository.update(sibling);
+            }
+            currentOrder++;
+        }
+
+        return true;
     }
 
     /**
@@ -614,6 +669,7 @@ public class TemplateService implements ITemplateService {
         // 这里简单实现，实际应用中可能需要更复杂的逻辑
         String prefix = nodeType.name().substring(0, 3);
         String timestamp = String.valueOf(System.currentTimeMillis());
+
         return prefix + "_" + timestamp;
     }
 
@@ -624,7 +680,6 @@ public class TemplateService implements ITemplateService {
         if (targetNodeId.equals(subtreeRootId)) {
             return true;
         }
-
         List<StructureTemplateNodeEntity> children = templateNodeRepository.findByParentId(subtreeRootId);
         for (StructureTemplateNodeEntity child : children) {
             if (isNodeInSubtree(targetNodeId, child.getId())) {
@@ -642,7 +697,6 @@ public class TemplateService implements ITemplateService {
         // 构建节点ID到节点的映射
         Map<TemplateNodeId, StructureTemplateNodeEntity> nodeMap = nodes.stream()
                 .collect(Collectors.toMap(StructureTemplateNodeEntity::getId, node -> node));
-
         // 对每个节点进行循环检测
         for (StructureTemplateNodeEntity node : nodes) {
             Set<TemplateNodeId> visited = new HashSet<>();
@@ -661,15 +715,13 @@ public class TemplateService implements ITemplateService {
         if (visited.contains(nodeId)) {
             return true;
         }
-
         visited.add(nodeId);
-
         StructureTemplateNodeEntity node = nodeMap.get(nodeId);
         if (node != null && node.getParentId() != null) {
             return hasCycle(node.getParentId(), nodeMap, visited);
         }
-
         visited.remove(nodeId);
+
         return false;
     }
 
@@ -684,17 +736,13 @@ public class TemplateService implements ITemplateService {
     private void updateSubtreePathAndLevel(String oldPath, String newPath, int oldLevel, int newLevel) {
         // 查询所有以oldPath开头的节点
         List<StructureTemplateNodeEntity> subtreeNodes = templateNodeRepository.findByPathStartingWith(oldPath + "-");
-
         int levelDiff = newLevel - oldLevel;
-
         for (StructureTemplateNodeEntity node : subtreeNodes) {
             // 替换路径前缀
             String currentPath = node.getNodePath();
             String updatedPath = newPath + currentPath.substring(oldPath.length());
-
             // 更新层级
             int updatedLevel = node.getNodeLevel() + levelDiff;
-
             // 更新节点
             node.updatePathAndLevel(updatedPath, updatedLevel);
             templateNodeRepository.update(node);

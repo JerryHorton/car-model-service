@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @version 1.0
  * @Date 2025/7/29 17:48
- * @Description
+ * @Description 模板基础分页VO
  * @Author jerryhotton
  */
 

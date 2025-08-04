@@ -30,7 +30,7 @@ public class CarModelEntity {
     /**
      * 车型ID
      */
-    private ModelId modelId;
+    private ModelId id;
     /**
      * 车型编码
      */
@@ -91,7 +91,6 @@ public class CarModelEntity {
         }
 
         return CarModelEntity.builder()
-                .modelId(new ModelId(UUID.randomUUID().toString()))
                 .modelCode(modelCode)
                 .brand(brand)
                 .powerType(powerType)

@@ -57,6 +57,27 @@ public class StructureInstanceNodeEntity {
      */
     private Integer sortOrder;
     /**
+     * 系统大类ID，仅当节点类型为CATEGORY时有值
+     */
+    private Long categoryId;
+    /**
+     * 系统组ID，仅当节点类型为GROUP时有值
+     */
+    private Long groupId;
+    /**
+     * 用法ID，仅当节点类型为USAGE时有值
+     */
+    private Long usageId;
+    /**
+     * 节点路径，格式为：节点ID-子节点ID-孙节点ID
+     */
+    private String nodePath;
+
+    /**
+     * 节点层级，根节点为0
+     */
+    private Integer nodeLevel;
+    /**
      * 状态
      */
     private Status status;
@@ -139,15 +160,23 @@ public class StructureInstanceNodeEntity {
      *
      * @param nodeName   节点名称
      * @param nodeNameEn 节点英文名称
-     * @param sortOrder  排序顺序
      */
-    public void update(String nodeName, String nodeNameEn, Integer sortOrder) {
+    public void update(String nodeName, String nodeNameEn) {
         this.nodeName = nodeName;
         this.nodeNameEn = nodeNameEn;
+        this.updatedTime = LocalDateTime.now();
+    }
+
+    /**
+     * 更新节点排序顺序
+     *
+     * @param sortOrder 排序顺序
+     */
+    public void updateSortOrder(Integer sortOrder) {
         if (sortOrder != null) {
             this.sortOrder = sortOrder;
+            this.updatedTime = LocalDateTime.now();
         }
-        this.updatedTime = LocalDateTime.now();
     }
 
     /**
@@ -171,6 +200,18 @@ public class StructureInstanceNodeEntity {
     }
 
     /**
+     * 更新节点路径和层级
+     *
+     * @param nodePath  节点路径
+     * @param nodeLevel 节点层级
+     */
+    public void updatePathAndLevel(String nodePath, Integer nodeLevel) {
+        this.nodePath = nodePath;
+        this.nodeLevel = nodeLevel;
+        this.updatedTime = LocalDateTime.now();
+    }
+
+    /**
      * 启用节点
      */
     public void enable() {
@@ -185,5 +226,6 @@ public class StructureInstanceNodeEntity {
         this.status = Status.DISABLED;
         this.updatedTime = LocalDateTime.now();
     }
+
 
 }

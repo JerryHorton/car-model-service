@@ -56,6 +56,6 @@ public class TemplateDetailVO {
     /**
      * 节点树
      */
-    private List<NodeTreeVO> nodeTree;
+    private List<TemplateNodeTreeVO> nodeTree;
 
 }

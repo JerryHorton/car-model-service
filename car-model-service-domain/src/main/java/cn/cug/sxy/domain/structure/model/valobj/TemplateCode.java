@@ -3,6 +3,7 @@ package cn.cug.sxy.domain.structure.model.valobj;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @version 1.0
@@ -19,7 +20,7 @@ public class TemplateCode {
     private final String code;
 
     public TemplateCode(String code) {
-        if (code == null || code.isEmpty()) {
+        if (StringUtils.isEmpty(code)) {
             throw new IllegalArgumentException("Template Code cannot be null or empty");
         }
         this.code = code;

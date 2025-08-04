@@ -32,7 +32,7 @@ public class CarSeriesConverter {
         }
 
         return CarSeriesEntity.builder()
-                .seriesId(new SeriesId(po.getSeriesId()))
+                .id(new SeriesId(po.getId()))
                 .seriesCode(new SeriesCode(po.getSeriesCode()))
                 .brand(new Brand(po.getBrand()))
                 .seriesName(po.getSeriesName())
@@ -52,7 +52,7 @@ public class CarSeriesConverter {
         }
 
         CarSeriesPO po = new CarSeriesPO();
-        po.setSeriesId(entity.getSeriesId().getId());
+        po.setId(entity.getId().getId());
         po.setSeriesCode(entity.getSeriesCode().getCode());
         po.setBrand(entity.getBrand().getName());
         po.setSeriesName(entity.getSeriesName());

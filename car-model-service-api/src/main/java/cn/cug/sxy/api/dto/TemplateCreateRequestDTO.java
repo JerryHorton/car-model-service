@@ -32,12 +32,10 @@ public class TemplateCreateRequestDTO {
      * 模板名称
      */
     @NotBlank(message = "模板名称不能为空")
-    @Size(max = 100, message = "模板名称长度不能超过100个字符")
     private String templateName;
     /**
      * 模板描述
      */
-    @Size(max = 500, message = "模板描述长度不能超过500个字符")
     private String templateDesc;
     /**
      * 模板版本

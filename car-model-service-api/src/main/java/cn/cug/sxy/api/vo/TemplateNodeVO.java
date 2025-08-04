@@ -1,18 +1,16 @@
-package cn.cug.sxy.api.dto;
+package cn.cug.sxy.api.vo;
 
-import cn.cug.sxy.api.vo.NodeTreeVO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * @version 1.0
- * @Date 2025/7/29 11:15
- * @Description 模板创建响应DTO
+ * @Date 2025/7/30 10:01
+ * @Description 节点VO
  * @Author jerryhotton
  */
 
@@ -20,24 +18,40 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemplateCreateResponseDTO {
+public class TemplateNodeVO {
 
     /**
-     * 模板ID
+     * 节点ID
      */
     private Long id;
     /**
-     * 模板编码
+     * 模板ID
      */
-    private String templateCode;
+    private Long templateId;
     /**
-     * 模板名称
+     * 父节点ID
      */
-    private String templateName;
+    private Long parentId;
     /**
-     * 模板版本
+     * 节点编码
      */
-    private String version;
+    private String nodeCode;
+    /**
+     * 节点名称
+     */
+    private String nodeName;
+    /**
+     * 节点英文名称
+     */
+    private String nodeNameEn;
+    /**
+     * 节点类型
+     */
+    private String nodeType;
+    /**
+     * 排序序号
+     */
+    private Integer sortOrder;
     /**
      * 状态
      */
@@ -54,9 +68,5 @@ public class TemplateCreateResponseDTO {
      * 更新时间
      */
     private LocalDateTime updatedTime;
-    /**
-     * 节点树
-     */
-    private List<NodeTreeVO> nodeTree;
 
 }

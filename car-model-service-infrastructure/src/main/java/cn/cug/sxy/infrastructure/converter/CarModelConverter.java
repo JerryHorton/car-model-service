@@ -35,7 +35,7 @@ public class CarModelConverter {
         }
 
         return CarModelEntity.builder()
-                .modelId(new ModelId(po.getModelId()))
+                .id(new ModelId(po.getId()))
                 .modelCode(new ModelCode(po.getModelCode()))
                 .brand(new Brand(po.getBrand()))
                 .powerType(PowerType.fromCode(po.getPowerType()))
@@ -59,7 +59,7 @@ public class CarModelConverter {
         }
 
         CarModelPO po = new CarModelPO();
-        po.setModelId(entity.getModelId().getId());
+        po.setId(entity.getId().getId());
         po.setModelCode(entity.getModelCode().getCode());
         po.setBrand(entity.getBrand().getName());
         po.setPowerType(entity.getPowerType().getCode());

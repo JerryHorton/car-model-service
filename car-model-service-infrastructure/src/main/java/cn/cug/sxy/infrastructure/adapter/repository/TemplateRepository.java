@@ -48,7 +48,6 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
         if (po.getId() != null && template.getId() == null) {
             template.setId(new TemplateId(po.getId()));
         }
-
         // 清除相关缓存
         clearCacheOnSave(template);
     }
@@ -58,12 +57,11 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
         if (template == null || template.getId() == null) {
             return 0;
         }
-        TemplateStructurePO po = TemplateStructureConverter.toPO(template);
-        int result = templateStructureDao.update(po);
         // 清除相关缓存
         clearCacheOnUpdate(template);
+        TemplateStructurePO po = TemplateStructureConverter.toPO(template);
 
-        return result;
+        return templateStructureDao.update(po);
     }
 
     @Override
@@ -78,9 +76,8 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
         int result = templateStructureDao.updateStatus(templateStructurePOReq);
         // 清除相关缓存
         if (result > 0) {
-            String idCacheKey = getTemplateByIdCacheKey(templateId.getId());
-            redisService.remove(idCacheKey);
-            redisService.remove(getTemplateAllCacheKey());
+            redisService.remove(getTemplateByIdCacheKey(templateId.getId()));
+            clearRelationCache(templateId);
         }
 
         return result;
@@ -150,7 +147,7 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
     @Override
     public List<StructureTemplateEntity> findAll() {
         String cacheKey = getTemplateAllCacheKey();
-        List<TemplateStructurePO> templateStructurePOList = getDataFromCacheOrDB(cacheKey, () -> templateStructureDao.selectAll());
+        List<TemplateStructurePO> templateStructurePOList = getDataFromCacheOrDB(cacheKey, templateStructureDao::selectAll);
         if (templateStructurePOList == null || templateStructurePOList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -160,8 +157,10 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
 
     @Override
     public List<StructureTemplateEntity> findTemplates(TemplateCode templateCode, Status status, String nameKeyword) {
-        nameKeyword = nameKeyword.replace("%", "\\%").replace("_", "\\_");
-        nameKeyword = "%" + nameKeyword + "%";
+        if (nameKeyword != null) {
+            nameKeyword = nameKeyword.replace("%", "\\%").replace("_", "\\_");
+            nameKeyword = "%" + nameKeyword + "%";
+        }
         TemplateStructurePO templateStructurePOReq = new TemplateStructurePO();
         templateStructurePOReq.setTemplateCode(null == templateCode ? null : templateCode.getCode());
         templateStructurePOReq.setStatus(null == status ? null : status.getCode());
@@ -241,42 +240,18 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
         if (templateId == null) {
             return 0;
         }
-        int result = updateStatus(templateId, Status.DELETED);
-        // 清除相关缓存
-        if (result > 0) {
-            redisService.remove(getTemplateByIdCacheKey(templateId.getId()));
-            redisService.remove(getTemplateAllCacheKey());
-            // 查找需要清理的其他缓存
-            Optional<StructureTemplateEntity> entity = findById(templateId);
-            entity.ifPresent(e -> {
-                if (e.getTemplateCode() != null) {
-                    redisService.remove(getTemplateByCodeCacheKey(e.getTemplateCode().getCode()));
-                    if (e.getVersion() != null) {
-                        redisService.remove(getTemplateByCodeAndVersionCacheKey(
-                                e.getTemplateCode().getCode(), e.getVersion()));
-                    }
-                }
-            });
-        }
 
-        return result;
+        return updateStatus(templateId, Status.DELETED);
     }
 
     /**
      * 保存时清除相关缓存
      */
     private void clearCacheOnSave(StructureTemplateEntity template) {
-        if (template == null) {
+        if (template == null || template.getId() == null) {
             return;
         }
-        redisService.remove(getTemplateAllCacheKey());
-        if (template.getTemplateCode() != null) {
-            redisService.remove(getTemplateByCodeCacheKey(template.getTemplateCode().getCode()));
-            if (template.getVersion() != null) {
-                redisService.remove(getTemplateByCodeAndVersionCacheKey(
-                        template.getTemplateCode().getCode(), template.getVersion()));
-            }
-        }
+        clearRelationCache(template.getId());
     }
 
     /**
@@ -287,14 +262,27 @@ public class TemplateRepository extends AbstractRepository implements ITemplateR
             return;
         }
         redisService.remove(getTemplateByIdCacheKey(template.getId().getId()));
+        clearRelationCache(template.getId());
+    }
+
+    /**
+     * 清除缓存
+     *
+     * @param templateId 模板ID
+     */
+    private void clearRelationCache(TemplateId templateId) {
         redisService.remove(getTemplateAllCacheKey());
-        if (template.getTemplateCode() != null) {
-            redisService.remove(getTemplateByCodeCacheKey(template.getTemplateCode().getCode()));
-            if (template.getVersion() != null) {
-                redisService.remove(getTemplateByCodeAndVersionCacheKey(
-                        template.getTemplateCode().getCode(), template.getVersion()));
+        // 查找需要清理的其他缓存
+        Optional<StructureTemplateEntity> entity = findById(templateId);
+        entity.ifPresent(e -> {
+            if (e.getTemplateCode() != null) {
+                redisService.remove(getTemplateByCodeCacheKey(e.getTemplateCode().getCode()));
+                if (e.getVersion() != null) {
+                    redisService.remove(getTemplateByCodeAndVersionCacheKey(
+                            e.getTemplateCode().getCode(), e.getVersion()));
+                }
             }
-        }
+        });
     }
 
     private String getTemplateByIdCacheKey(Long id) {

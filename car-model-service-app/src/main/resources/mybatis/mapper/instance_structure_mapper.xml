@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IInstanceStructureDao">
+
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO">
+        <id column="id" property="id"/>
+        <result column="instance_code" property="instanceCode"/>
+        <result column="instance_name" property="instanceName"/>
+        <result column="instance_desc" property="instanceDesc"/>
+        <result column="series_id" property="seriesId"/>
+        <result column="model_id" property="modelId"/>
+        <result column="version" property="version"/>
+        <result column="status" property="status"/>
+        <result column="is_published" property="isPublished"/>
+        <result column="effective_time" property="effectiveTime"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, instance_code, instance_name, instance_desc, series_id, model_id, version, status, is_published, effective_time, creator, created_time, updated_time
+    </sql>
+
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO structure_instance (instance_code, instance_name, instance_desc, series_id, model_id, version,
+                                        status, is_published,
+                                        effective_time, creator, created_time, updated_time)
+        VALUES (#{instanceCode}, #{instanceName}, #{instanceDesc}, #{seriesId}, #{modelId}, #{version}, #{status},
+                #{isPublished},
+                #{effectiveTime}, #{creator}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO">
+        UPDATE structure_instance
+        SET instance_name  = #{instanceName},
+            instance_desc  = #{instanceDesc},
+            series_id      = #{seriesId},
+            model_id       = #{modelId},
+            version        = #{version},
+            status         = #{status},
+            is_published   = #{isPublished},
+            effective_time = #{effectiveTime},
+            updated_time   = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO">
+        UPDATE structure_instance
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePublishStatus">
+        UPDATE structure_instance
+        SET is_published = #{isPublished},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByInstanceCode" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE instance_code = #{instanceCode}
+        ORDER BY version DESC
+    </select>
+
+    <select id="selectByInstanceCodeAndVersion" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO"
+            resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE instance_code = #{instanceCode}
+        AND version = #{version}
+        LIMIT 1
+    </select>
+
+    <select id="selectBySeriesId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE series_id = #{seriesId}
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByModelId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE model_id = #{modelId}
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE status = #{status}
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectByCondition" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO"
+            resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance
+        WHERE 1 = 1
+        <if test="instanceCode != null and instanceCode.length() > 0">
+            AND instance_code = #{instanceCode}
+        </if>
+        <if test="instanceName != null and instanceName.length() > 0">
+            AND instance_name LIKE #{instanceName}
+        </if>
+        <if test="status != null and status.length() > 0">
+            AND status = #{status}
+        </if>
+        <if test="seriesId != null">
+            AND series_id = #{seriesId}
+        </if>
+        <if test="modelId != null">
+            AND model_id = #{modelId}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM structure_instance
+        WHERE id = #{id}
+    </delete>
+
+    <select id="countByInstanceCode" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(1)
+        FROM structure_instance
+        WHERE instance_code = #{instanceCode}
+    </select>
+
+    <select id="countByInstanceCodeAndVersion" parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO"
+            resultType="int">
+        SELECT COUNT(1)
+        FROM structure_instance
+        WHERE instance_code = #{instanceCode}
+          AND version = #{version}
+    </select>
+</mapper>

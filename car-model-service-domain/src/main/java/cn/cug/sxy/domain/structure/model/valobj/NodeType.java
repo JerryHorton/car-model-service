@@ -16,10 +16,10 @@ public enum NodeType {
 
     CATEGORY("CATEGORY", "系统大类"),
     GROUP("GROUP", "系统分组"),
-    PART("PART", "备件");
+    USAGE("USAGE", "用法");
 
     private final String code;
-    private final String desc;
+    private final String info;
 
     public static NodeType fromCode(String code) {
         if (code == null) {

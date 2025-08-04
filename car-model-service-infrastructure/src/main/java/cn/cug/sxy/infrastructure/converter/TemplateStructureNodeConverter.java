@@ -7,6 +7,7 @@ import cn.cug.sxy.domain.structure.model.valobj.TemplateId;
 import cn.cug.sxy.domain.structure.model.valobj.TemplateNodeId;
 import cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,7 +90,7 @@ public class TemplateStructureNodeConverter {
      */
     public static List<StructureTemplateNodeEntity> toEntityList(List<TemplateStructureNodePO> poList) {
         if (poList == null || poList.isEmpty()) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
 
         return poList.stream()
@@ -105,7 +106,7 @@ public class TemplateStructureNodeConverter {
      */
     public static List<TemplateStructureNodePO> toPOList(List<StructureTemplateNodeEntity> entityList) {
         if (entityList == null || entityList.isEmpty()) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
 
         return entityList.stream()

@@ -34,6 +34,14 @@ public class StructureInstanceEntity {
      */
     private InstanceCode instanceCode;
     /**
+     * 实例名称
+     */
+    private String instanceName;
+    /**
+     * 实例描述
+     */
+    private String instanceDesc;
+    /**
      * 车型系列ID
      */
     private SeriesId seriesId;
@@ -44,7 +52,7 @@ public class StructureInstanceEntity {
     /**
      * 结构实例版本号
      */
-    private String instanceVersion;
+    private String version;
     /**
      * 状态
      */
@@ -73,20 +81,24 @@ public class StructureInstanceEntity {
     /**
      * 创建车型结构树实例
      *
-     * @param instanceCode    实例编码
-     * @param seriesId        车型系列ID
-     * @param modelId         车型ID
-     * @param instanceVersion 实例版本
-     * @param creator         创建人
+     * @param instanceCode 实例编码
+     * @param instanceName 实例名称
+     * @param instanceDesc 实例描述
+     * @param seriesId     车型系列ID
+     * @param modelId      车型ID
+     * @param version      实例版本
+     * @param creator      创建人
      * @return 车型结构树实例实体
      */
-    public static StructureInstanceEntity create(InstanceCode instanceCode, SeriesId seriesId,
-                                                 ModelId modelId, String instanceVersion, String creator) {
+    public static StructureInstanceEntity create(InstanceCode instanceCode, String instanceName, String instanceDesc,
+                                                 SeriesId seriesId, ModelId modelId, String version, String creator) {
         return StructureInstanceEntity.builder()
                 .instanceCode(instanceCode)
+                .instanceName(instanceName)
+                .instanceDesc(instanceDesc)
                 .seriesId(seriesId)
                 .modelId(modelId)
-                .instanceVersion(instanceVersion)
+                .version(version)
                 .status(Status.ENABLED)
                 .isPublished(false)
                 .creator(creator)
@@ -98,14 +110,14 @@ public class StructureInstanceEntity {
     /**
      * 更新实例基本信息
      *
-     * @param seriesId        车型系列ID
-     * @param modelId         车型ID
-     * @param instanceVersion 实例版本
+     * @param seriesId 车型系列ID
+     * @param modelId  车型ID
+     * @param version  实例版本
      */
-    public void update(SeriesId seriesId, ModelId modelId, String instanceVersion) {
+    public void update(SeriesId seriesId, ModelId modelId, String version) {
         this.seriesId = seriesId;
         this.modelId = modelId;
-        this.instanceVersion = instanceVersion;
+        this.version = version;
         this.updatedTime = LocalDateTime.now();
     }
 

@@ -16,11 +16,11 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class ModelId {
 
-    private final String id;
+    private final Long id;
 
-    public ModelId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Model ID cannot be null or empty");
+    public ModelId(Long id) {
+        if (id == null || id < 0) {
+            throw new IllegalArgumentException("Model ID cannot be null or less than 0");
         }
         this.id = id;
     }
