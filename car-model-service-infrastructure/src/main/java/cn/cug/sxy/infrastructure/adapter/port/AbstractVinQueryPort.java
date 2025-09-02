@@ -1,8 +1,8 @@
 package cn.cug.sxy.infrastructure.adapter.port;
 
-import cn.cug.sxy.domain.model.adapter.port.IVinQueryPort;
-import cn.cug.sxy.domain.model.model.valobj.VinCode;
-import cn.cug.sxy.domain.model.model.valobj.VinQueryResult;
+import cn.cug.sxy.domain.series.adapter.port.IVinQueryPort;
+import cn.cug.sxy.domain.series.model.valobj.VinCode;
+import cn.cug.sxy.domain.series.model.valobj.VinQueryResult;
 import cn.cug.sxy.infrastructure.adapter.port.config.VinQueryPortConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

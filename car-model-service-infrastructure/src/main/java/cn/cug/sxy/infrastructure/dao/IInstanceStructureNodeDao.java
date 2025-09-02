@@ -64,6 +64,14 @@ public interface IInstanceStructureNodeDao {
     int updateSortOrder(InstanceStructureNodePO nodePO);
 
     /**
+     * 根据节点路径前缀更新状态
+     *
+     * @param po 节点PO
+     * @return 影响的行数
+     */
+    int updateStatusByNodePathStartWith(InstanceStructureNodePO po);
+
+    /**
      * 根据ID查询节点
      *
      * @param id 节点ID
@@ -136,6 +144,14 @@ public interface IInstanceStructureNodeDao {
     List<InstanceStructureNodePO> selectByNodePathLike(String pathPattern);
 
     /**
+     * 根据用法ID查询节点
+     *
+     * @param usageId 用法ID
+     * @return 节点PO列表
+     */
+    InstanceStructureNodePO selectByUsageId(Long usageId);
+
+    /**
      * 删除节点
      *
      * @param id 节点ID
@@ -158,6 +174,14 @@ public interface IInstanceStructureNodeDao {
      * @return 影响的行数
      */
     int deleteByNodePathStartWith(String nodePath);
+
+    /**
+     * 根据用法ID删除节点
+     *
+     * @param usageId 用法ID
+     * @return 影响的行数
+     */
+    int deleteByUsageId(Long usageId);
 
     /**
      * 查询节点的子节点数量

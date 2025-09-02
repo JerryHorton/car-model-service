@@ -9,6 +9,7 @@ import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
 import cn.cug.sxy.domain.structure.service.ITemplateService;
 import cn.cug.sxy.types.enums.ResponseCode;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.types.exception.AppException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -149,7 +150,8 @@ public class StructureTemplateController implements IStructureTemplateService {
                     .data(TemplateBasePageVO.builder()
                             .pageNo(pageNo)
                             .pageSize(pageSize)
-                            .totalPages(templatePage.getTotal())
+                            .total(templatePage.getTotal())
+                            .totalPages(templatePage.getTotalPages())
                             .templates(templatePage.getTemplates().stream()
                                     .map(this::convertToTemplateBaseVO)
                                     .collect(Collectors.toList()))

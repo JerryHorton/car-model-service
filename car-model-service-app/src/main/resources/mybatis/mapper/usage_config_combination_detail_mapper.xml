@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IUsageConfigCombinationDetailDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.UsageConfigCombinationDetailPO">
+        <id column="id" property="id"/>
+        <result column="combination_id" property="combinationId"/>
+        <result column="config_item_id" property="configItemId"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, combination_id, config_item_id, created_time
+    </sql>
+
+    <!-- 插入用法配置组合明细 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.UsageConfigCombinationDetailPO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO usage_config_combination_detail (combination_id, config_item_id, created_time)
+        VALUES (#{combinationId}, #{configItemId}, #{createdTime})
+    </insert>
+
+    <!-- 批量插入用法配置组合明细 -->
+    <insert id="insertBatch" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO usage_config_combination_detail (
+        combination_id, config_item_id, created_time
+        ) VALUES
+        <foreach collection="details" item="detail" separator=",">
+            (#{detail.combinationId}, #{detail.configItemId}, #{detail.createdTime})
+        </foreach>
+    </insert>
+
+    <!-- 根据组合ID查询所有明细 -->
+    <select id="selectByCombinationId" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_config_combination_detail
+        WHERE combination_id = #{combinationId}
+        ORDER BY config_item_id ASC
+    </select>
+
+    <!-- 根据用法ID查询所有配置项ID -->
+    <select id="selectConfigItemIdsByUsageId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        SELECT DISTINCT uccd.config_item_id
+        FROM usage_config_combination_detail uccd
+                 JOIN usage_config_combination ucc ON uccd.combination_id = ucc.id
+        WHERE ucc.usage_id = #{usageId}
+        ORDER BY uccd.config_item_id ASC
+    </select>
+
+    <select id="selectByConfigItemId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_config_combination_detail
+        WHERE config_item_id = #{configItemId}
+        ORDER BY config_item_id ASC
+    </select>
+
+    <!-- 根据组合ID删除所有明细 -->
+    <delete id="deleteByCombinationId" parameterType="java.lang.Long">
+        DELETE
+        FROM usage_config_combination_detail
+        WHERE combination_id = #{combinationId}
+    </delete>
+
+    <!-- 根据配置项ID删除相关明细 -->
+    <delete id="deleteByConfigItemId" parameterType="java.lang.Long">
+        DELETE
+        FROM usage_config_combination_detail
+        WHERE config_item_id = #{configItemId}
+    </delete>
+
+</mapper>

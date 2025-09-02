@@ -29,6 +29,8 @@ public class RedisClientConfig {
                 .setAddress("redis://" + properties.getHost() + ":" + properties.getPort())
                 .setConnectionPoolSize(properties.getPoolSize())
                 .setConnectionMinimumIdleSize(properties.getMinIdleSize())
+                .setUsername(properties.getUsername())
+                .setPassword(properties.getPassword())
                 .setIdleConnectionTimeout(properties.getIdleTimeout())
                 .setConnectTimeout(properties.getConnectTimeout())
                 .setRetryAttempts(properties.getRetryAttempts())

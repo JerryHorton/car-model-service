@@ -3,6 +3,7 @@ package cn.cug.sxy.api.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
  */
 
 @Data
-public class InstancePublishRequestDTO {
+public class InstancePublishRequestDTO implements Serializable {
 
     /**
      * 实例ID

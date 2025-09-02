@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IWorkHourDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="WorkHourResultMap" type="cn.cug.sxy.infrastructure.dao.po.WorkHourPO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="standard_hours" property="standardHours" jdbcType="DECIMAL"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="step_order" property="stepOrder" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="creator" property="creator" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, parent_id, code, description, standard_hours, type, step_order, status, creator, created_time, updated_time
+    </sql>
+
+    <!-- 插入工时记录 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.WorkHourPO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO work_hour (
+            parent_id, code, description, standard_hours, type, step_order, status, creator
+        ) VALUES (
+            #{parentId}, #{code}, #{description}, #{standardHours}, #{type}, #{stepOrder}, #{status}, #{creator}
+        )
+    </insert>
+
+    <!-- 更新工时记录 -->
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.WorkHourPO">
+        UPDATE work_hour
+        SET parent_id = #{parentId},
+            code = #{code},
+            description = #{description},
+            standard_hours = #{standardHours},
+            type = #{type},
+            step_order = #{stepOrder},
+            status = #{status},
+            creator = #{creator},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除工时记录 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM work_hour WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID查询工时记录 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据编码查询工时记录 -->
+    <select id="selectByCode" parameterType="java.lang.String" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE code = #{code}
+    </select>
+
+    <!-- 根据父ID查询子工时记录列表 -->
+    <select id="selectByParentId" parameterType="java.lang.Long" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE parent_id = #{parentId}
+        ORDER BY step_order ASC
+    </select>
+
+    <!-- 查询所有主工时记录 -->
+    <select id="selectAllMainWorkHours" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE parent_id IS NULL
+        ORDER BY code ASC
+    </select>
+
+    <!-- 根据状态查询工时记录列表 -->
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE status = #{status}
+        ORDER BY code ASC
+    </select>
+
+    <!-- 根据类型查询工时记录列表 -->
+    <select id="selectByType" parameterType="java.lang.String" resultMap="WorkHourResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM work_hour
+        WHERE type = #{type}
+        ORDER BY code ASC
+    </select>
+
+    <!-- 检查工时代码是否存在 -->
+    <select id="existsByCode" parameterType="java.lang.String" resultType="java.lang.Boolean">
+        SELECT COUNT(1) > 0
+        FROM work_hour
+        WHERE code = #{code}
+    </select>
+
+</mapper> 

@@ -1,9 +1,9 @@
 package cn.cug.sxy.infrastructure.adapter.port;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelCode;
-import cn.cug.sxy.domain.model.model.valobj.PowerType;
-import cn.cug.sxy.domain.model.model.valobj.VinCode;
-import cn.cug.sxy.domain.model.model.valobj.VinQueryResult;
+import cn.cug.sxy.domain.series.model.valobj.ModelCode;
+import cn.cug.sxy.domain.series.model.valobj.PowerType;
+import cn.cug.sxy.domain.series.model.valobj.VinCode;
+import cn.cug.sxy.domain.series.model.valobj.VinQueryResult;
 import cn.cug.sxy.domain.series.model.valobj.Brand;
 import cn.cug.sxy.infrastructure.adapter.port.config.VinQueryPortConfig;
 import cn.cug.sxy.infrastructure.gateway.ICarServiceGateway;

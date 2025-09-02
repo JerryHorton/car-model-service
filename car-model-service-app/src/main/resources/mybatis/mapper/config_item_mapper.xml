@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IConfigItemDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.ConfigItemPO">
+        <id column="id" property="id"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_value" property="itemValue"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, category_id, item_code, item_name, item_value, status, creator, created_time, updated_time
+    </sql>
+
+    <!-- 插入配置项 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.ConfigItemPO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO config_item (category_id, item_code, item_name, item_value, status, creator, created_time,
+                                 updated_time)
+        VALUES (#{categoryId}, #{itemCode}, #{itemName}, #{itemValue}, #{status}, #{creator}, #{createdTime},
+                #{updatedTime})
+    </insert>
+
+    <!-- 更新配置项 -->
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.ConfigItemPO">
+        UPDATE config_item
+        <set>
+            <if test="itemName != null and itemName.length() > 0">
+                item_name = #{itemName},
+            </if>
+            <if test="itemValue != null and itemValue.length() > 0">
+                item_value = #{itemValue},
+            </if>
+            <if test="status != null and status.length() > 0">
+                status = #{status},
+            </if>
+            updated_time = #{updatedTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询配置项 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM config_item
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据类别ID查询可用的配置项 -->
+    <select id="selectEnabledByCategoryId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM config_item
+        WHERE category_id = #{categoryId} AND status = 'ENABLED'
+        ORDER BY item_code ASC
+    </select>
+
+    <!-- 根据配置项编码查询配置项 -->
+    <select id="selectByCode" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM config_item
+        WHERE item_code = #{itemCode}
+    </select>
+
+    <!-- 根据配置值模糊查询配置项 -->
+    <select id="selectByValueLikeOrNameLike" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM config_item
+        WHERE (item_name LIKE #{keyword} OR item_value LIKE #{keyword}) AND status = 'ENABLED'
+        ORDER BY category_id ASC, item_code ASC
+    </select>
+
+    <!-- 根据多个ID批量查询配置项 -->
+    <select id="selectByIds" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM config_item
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY category_id ASC, item_code ASC
+    </select>
+
+    <!-- 检查配置项编码是否存在 -->
+    <select id="countByCode" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(1)
+        FROM config_item
+        WHERE item_code = #{itemCode}
+    </select>
+
+    <!-- 删除配置项 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM config_item
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据类别ID删除所有配置项 -->
+    <delete id="deleteByCategoryId" parameterType="java.lang.Long">
+        DELETE
+        FROM config_item
+        WHERE category_id = #{categoryId}
+    </delete>
+
+</mapper>

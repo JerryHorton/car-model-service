@@ -1,22 +1,24 @@
 package cn.cug.sxy.infrastructure.adapter.repository;
 
-import cn.cug.sxy.domain.model.adapter.repository.ICarModelRepository;
-import cn.cug.sxy.domain.model.model.entity.CarModelEntity;
-import cn.cug.sxy.domain.model.model.valobj.ModelCode;
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
-import cn.cug.sxy.domain.model.model.valobj.ModelStatus;
-import cn.cug.sxy.domain.model.model.valobj.PowerType;
+import cn.cug.sxy.domain.series.adapter.repository.ICarModelRepository;
+import cn.cug.sxy.domain.series.model.entity.CarModelEntity;
+import cn.cug.sxy.domain.series.model.valobj.ModelCode;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelStatus;
+import cn.cug.sxy.domain.series.model.valobj.PowerType;
 import cn.cug.sxy.domain.series.model.valobj.Brand;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.infrastructure.converter.CarModelConverter;
 import cn.cug.sxy.infrastructure.dao.ICarModelDao;
 import cn.cug.sxy.infrastructure.dao.po.CarModelPO;
+import cn.cug.sxy.infrastructure.minio.IFileStorageService;
 import cn.cug.sxy.types.common.Constants;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @version 1.0
@@ -29,9 +31,13 @@ import java.util.Optional;
 public class CarModelRepository extends AbstractRepository implements ICarModelRepository {
 
     private final ICarModelDao carModelDao;
+    private final IFileStorageService fileStorageService;
 
-    public CarModelRepository(ICarModelDao carModelDao) {
+    public CarModelRepository(
+            ICarModelDao carModelDao,
+            IFileStorageService fileStorageService) {
         this.carModelDao = carModelDao;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -44,8 +50,22 @@ public class CarModelRepository extends AbstractRepository implements ICarModelR
     }
 
     @Override
+    public String uploadModelIcon(String fileData, String fileName, String contentType, Long modelId) {
+        return fileStorageService.uploadModelIcon(fileData, fileName, contentType, modelId);
+    }
+
+    @Override
     public int update(CarModelEntity carModelEntity) {
         return carModelDao.update(CarModelConverter.toPO(carModelEntity));
+    }
+
+    @Override
+    public int updateModelIconPath(CarModelEntity modelEntity) {
+        String filePath = modelEntity.getIconPath();
+        String downloadUrl = fileStorageService.generatePresignedUrl(filePath, 7, TimeUnit.DAYS);
+        modelEntity.setDownloadUrl(downloadUrl);
+
+        return carModelDao.update(CarModelConverter.toPO(modelEntity));
     }
 
     @Override
@@ -160,6 +180,11 @@ public class CarModelRepository extends AbstractRepository implements ICarModelR
     @Override
     public boolean remove(ModelId modelId) {
         return carModelDao.deleteByModelId(modelId.getId()) == 1;
+    }
+
+    @Override
+    public boolean deleteModelIcon(String iconPath) {
+        return fileStorageService.delete(iconPath);
     }
 
     @Override

@@ -1,13 +1,12 @@
 package cn.cug.sxy.infrastructure.adapter.repository;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.adapter.repository.IInstanceRepository;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceEntity;
-import cn.cug.sxy.domain.structure.model.entity.StructureTemplateEntity;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceCode;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.domain.structure.model.valobj.StructureInstancePageVO;
 import cn.cug.sxy.infrastructure.converter.InstanceStructureConverter;
 import cn.cug.sxy.infrastructure.dao.IInstanceStructureDao;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @version 1.0

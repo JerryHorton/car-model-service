@@ -1,10 +1,10 @@
 package cn.cug.sxy.infrastructure.converter;
 
-import cn.cug.sxy.domain.model.model.entity.CarModelEntity;
-import cn.cug.sxy.domain.model.model.valobj.ModelCode;
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
-import cn.cug.sxy.domain.model.model.valobj.ModelStatus;
-import cn.cug.sxy.domain.model.model.valobj.PowerType;
+import cn.cug.sxy.domain.series.model.entity.CarModelEntity;
+import cn.cug.sxy.domain.series.model.valobj.ModelCode;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelStatus;
+import cn.cug.sxy.domain.series.model.valobj.PowerType;
 import cn.cug.sxy.domain.series.model.valobj.Brand;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.infrastructure.dao.po.CarModelPO;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * @version 1.0
  * @Date 2025/7/22 09:57
- * @Description
+ * @Description 车型转换器
  * @Author jerryhotton
  */
 
@@ -57,14 +57,13 @@ public class CarModelConverter {
         if (entity == null) {
             return null;
         }
-
         CarModelPO po = new CarModelPO();
-        po.setId(entity.getId().getId());
-        po.setModelCode(entity.getModelCode().getCode());
-        po.setBrand(entity.getBrand().getName());
-        po.setPowerType(entity.getPowerType().getCode());
-        po.setStatus(entity.getStatus().getCode());
-        po.setSeriesId(entity.getSeriesId().getId());
+        po.setId(entity.getId() == null ? null : entity.getId().getId());
+        po.setModelCode(entity.getModelCode() == null ? null : entity.getModelCode().getCode());
+        po.setBrand(entity.getBrand() == null ? null : entity.getBrand().getName());
+        po.setPowerType(entity.getPowerType() == null ? null : entity.getPowerType().getCode());
+        po.setStatus(entity.getStatus() == null ? null : entity.getStatus().getCode());
+        po.setSeriesId(entity.getSeriesId() == null ? null : entity.getSeriesId().getId());
         po.setModelName(entity.getModelName());
         po.setIconPath(entity.getIconPath());
         po.setDescription(entity.getDescription());

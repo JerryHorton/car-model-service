@@ -3,7 +3,7 @@ package cn.cug.sxy.domain.structure.model.entity;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceNodeId;
 import cn.cug.sxy.domain.structure.model.valobj.NodeType;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

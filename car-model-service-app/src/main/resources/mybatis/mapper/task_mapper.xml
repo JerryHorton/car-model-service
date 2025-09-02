@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.ITaskDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.TaskPO">
+        <id column="id" property="id"/>
+        <result column="message_id" property="messageId"/>
+        <result column="topic" property="topic"/>
+        <result column="message" property="message"/>
+        <result column="state" property="state"/>
+        <result column="retry_count" property="retryCount"/>
+        <result column="max_retries" property="maxRetries"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="last_retry_time" property="lastRetryTime"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, message_id, topic, message, state, retry_count, max_retries, error_message, last_retry_time, created_time, updated_time
+    </sql>
+
+    <!-- 插入任务 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.TaskPO">
+        INSERT INTO task (message_id, topic, message, state, retry_count, max_retries, error_message, last_retry_time,
+                          created_time, updated_time)
+        VALUES (#{messageId}, #{topic}, #{message}, #{state}, #{retryCount}, #{maxRetries}, #{errorMessage},
+                #{lastRetryTime}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新任务状态 -->
+    <update id="updateState" parameterType="cn.cug.sxy.infrastructure.dao.po.TaskPO">
+        UPDATE task
+        SET state           = #{state},
+            retry_count     = #{retryCount},
+            max_retries     = #{maxRetries},
+            error_message   = #{errorMessage},
+            last_retry_time = NOW(),
+            updated_time    = NOW()
+        WHERE message_id = #{messageId}
+    </update>
+
+    <!-- 更新任务重试信息 -->
+    <update id="updateRetryInfo" parameterType="cn.cug.sxy.infrastructure.dao.po.TaskPO">
+        UPDATE task
+        SET retry_count     = #{retryCount},
+            error_message   = #{errorMessage},
+            last_retry_time = NOW(),
+            updated_time    = NOW()
+        WHERE message_id = #{messageId}
+    </update>
+
+    <!-- 根据消息ID查询任务 -->
+    <select id="selectByMessageId" parameterType="string" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE message_id = #{messageId}
+    </select>
+
+    <!-- 根据主题查询任务列表 -->
+    <select id="selectByTopic" parameterType="string" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE topic = #{topic}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据状态查询任务列表 -->
+    <select id="selectByState" parameterType="string" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE state = #{state}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询失败的任务列表 -->
+    <select id="selectFailedTasks" parameterType="int" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE state = 'FAIL'
+        ORDER BY created_time ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询创建状态的任务列表 -->
+    <select id="selectCreatedTasks" parameterType="int" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE state = 'CREATE'
+        ORDER BY created_time ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询待处理的任务列表 -->
+    <select id="selectPendingTasks" parameterType="int" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE state = 'PUBLISHED'
+        ORDER BY created_time ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询超时处理中的任务列表 -->
+    <select id="selectTimeoutProcessingTasks" parameterType="java.time.LocalDateTime" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM task
+        WHERE state = 'PROCESSING'
+        AND #{beforeTime} > last_retry_time
+        ORDER BY updated_time ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 删除任务记录 -->
+    <delete id="deleteByMessageId" parameterType="string">
+        DELETE
+        FROM task
+        WHERE message_id = #{messageId}
+    </delete>
+
+    <!-- 批量删除已完成的任务 -->
+    <delete id="deleteCompletedTasksBefore" parameterType="java.time.LocalDateTime">
+        DELETE
+        FROM task
+        WHERE state = 'COMPLETED'
+          AND #{beforeTime} > created_time
+    </delete>
+
+</mapper>

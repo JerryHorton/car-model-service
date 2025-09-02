@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -18,12 +19,16 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemplateBasePageVO {
+public class TemplateBasePageVO implements Serializable {
 
     /**
      * 模板列表
      */
     private List<TemplateBaseVO> templates;
+    /**
+     * 总记录数
+     */
+    private Long total;
     /**
      * 当前页码
      */
@@ -35,6 +40,6 @@ public class TemplateBasePageVO {
     /**
      * 总页数
      */
-    private Long totalPages;
+    private Integer totalPages;
 
 }

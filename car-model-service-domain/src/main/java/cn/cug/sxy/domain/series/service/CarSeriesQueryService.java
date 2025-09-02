@@ -48,7 +48,7 @@ public class CarSeriesQueryService implements ICarSeriesQueryService {
 
     @Override
     public List<CarSeriesEntity> getByBrand(Brand brand) {
-        return carSeriesRepository.findByBrand(brand);
+        return carSeriesRepository.findSeriesByBrand(brand);
     }
 
     @Override

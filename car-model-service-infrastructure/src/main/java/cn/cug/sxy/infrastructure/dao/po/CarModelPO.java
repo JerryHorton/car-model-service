@@ -47,6 +47,10 @@ public class CarModelPO {
      */
     private String iconPath;
     /**
+     * 车型下载图标文件下载路径
+     */
+    private String downloadUrl;
+    /**
      * 车型描述
      */
     private String description;

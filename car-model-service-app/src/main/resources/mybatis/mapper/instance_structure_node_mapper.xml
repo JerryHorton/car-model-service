@@ -38,7 +38,7 @@
                 NOW())
     </insert>
 
-    <insert id="batchInsert" parameterType="java.util.List">
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO structure_instance_node (
         instance_id, parent_id, node_type, node_code, node_name, node_name_en, sort_order,
         category_id, group_id, usage_id, node_path, node_level, status, creator, created_time, updated_time
@@ -88,6 +88,14 @@
         SET sort_order   = #{sortOrder},
             updated_time = NOW()
         WHERE id = #{id}
+    </update>
+
+    <update id="updateStatusByNodePathStartWith"
+            parameterType="cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO">
+        UPDATE structure_instance_node
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE node_path LIKE #{nodePath}
     </update>
 
     <select id="selectById" resultMap="dataMap">
@@ -168,6 +176,14 @@
         ORDER BY node_level ASC, sort_order ASC
     </select>
 
+    <select id="selectByUsageId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM structure_instance_node
+        WHERE usage_id = #{usageId}
+        ORDER BY node_level ASC, sort_order ASC
+    </select>
+
     <delete id="deleteById" parameterType="java.lang.Long">
         DELETE
         FROM structure_instance_node
@@ -184,6 +200,12 @@
         DELETE
         FROM structure_instance_node
         WHERE node_path LIKE #{nodePath}
+    </delete>
+
+    <delete id="deleteByUsageId" parameterType="java.lang.Long">
+        DELETE
+        FROM structure_instance_node
+        WHERE usage_id = #{usageId}
     </delete>
 
     <select id="countByParentId" parameterType="java.lang.Long" resultType="int">

@@ -7,6 +7,7 @@ import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
 import cn.cug.sxy.domain.system.model.valobj.CategoryId;
 import cn.cug.sxy.domain.system.model.valobj.GroupId;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.types.exception.AppException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;

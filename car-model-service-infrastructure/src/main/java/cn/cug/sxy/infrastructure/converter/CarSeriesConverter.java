@@ -50,11 +50,10 @@ public class CarSeriesConverter {
         if (entity == null) {
             return null;
         }
-
         CarSeriesPO po = new CarSeriesPO();
-        po.setId(entity.getId().getId());
-        po.setSeriesCode(entity.getSeriesCode().getCode());
-        po.setBrand(entity.getBrand().getName());
+        po.setId(entity.getId() == null ? null : entity.getId().getId());
+        po.setSeriesCode(entity.getSeriesCode() == null ? null : entity.getSeriesCode().getCode());
+        po.setBrand(entity.getBrand() == null ? null : entity.getBrand().getName());
         po.setSeriesName(entity.getSeriesName());
         po.setDescription(entity.getDescription());
 

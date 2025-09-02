@@ -1,10 +1,9 @@
 package cn.cug.sxy.domain.structure.adapter.repository;
 
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
-import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
-import cn.cug.sxy.domain.structure.model.valobj.InstanceNodeId;
-import cn.cug.sxy.domain.structure.model.valobj.NodeType;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.domain.structure.model.valobj.*;
+import cn.cug.sxy.domain.usage.model.valobj.UsageId;
+import cn.cug.sxy.types.enums.Status;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,9 +51,27 @@ public interface IInstanceNodeRepository {
     int updateStatus(InstanceNodeId nodeId, Status status);
 
     /**
+     * 更新节点状态
+     *
+     * @param node 节点实体
+     * @param status 状态
+     * @return 更新的记录数
+     */
+    int updateStatus(StructureInstanceNodeEntity node, Status status);
+
+    /**
+     * 根据用法ID更新节点状态
+     *
+     * @param usageId 用法ID
+     * @param status  状态
+     * @return 更新的记录数
+     */
+    int updateStatusByUsageId(UsageId usageId, Status status);
+
+    /**
      * 更新节点父节点ID
      *
-     * @param nodeId 节点ID
+     * @param nodeId   节点ID
      * @param parentId 父节点ID
      * @return 更新的记录数
      */
@@ -63,7 +80,7 @@ public interface IInstanceNodeRepository {
     /**
      * 更新节点排序序号
      *
-     * @param nodeId 节点ID
+     * @param nodeId    节点ID
      * @param sortOrder 排序序号
      * @return 更新的记录数
      */
@@ -105,7 +122,7 @@ public interface IInstanceNodeRepository {
      * 根据实例ID和节点类型查询节点
      *
      * @param instanceId 实例ID
-     * @param nodeType 节点类型
+     * @param nodeType   节点类型
      * @return 节点列表
      */
     List<StructureInstanceNodeEntity> findByInstanceIdAndNodeType(InstanceId instanceId, NodeType nodeType);
@@ -114,7 +131,7 @@ public interface IInstanceNodeRepository {
      * 根据实例ID和状态查询节点
      *
      * @param instanceId 实例ID
-     * @param status 状态
+     * @param status     状态
      * @return 节点列表
      */
     List<StructureInstanceNodeEntity> findByInstanceIdAndStatus(InstanceId instanceId, Status status);
@@ -122,7 +139,7 @@ public interface IInstanceNodeRepository {
     /**
      * 根据实例ID和节点名称关键字查询节点
      *
-     * @param instanceId 实例ID
+     * @param instanceId  实例ID
      * @param nameKeyword 名称关键字
      * @return 节点列表
      */
@@ -153,12 +170,28 @@ public interface IInstanceNodeRepository {
     List<StructureInstanceNodeEntity> findByPathLike(String pathPattern);
 
     /**
+     * 根据用法ID查询节点
+     *
+     * @param usageId 用法ID
+     * @return 节点Optional
+     */
+    Optional<StructureInstanceNodeEntity> findByUsageId(UsageId usageId);
+
+    /**
      * 删除节点
      *
      * @param nodeId 节点ID
      * @return 删除的记录数
      */
     int deleteById(InstanceNodeId nodeId);
+
+    /**
+     * 根据用法ID删除节点
+     *
+     * @param usageId 用法ID
+     * @return 删除的记录数
+     */
+    int deleteByUsageId(UsageId usageId);
 
     /**
      * 根据实例ID删除所有节点

@@ -19,7 +19,7 @@ public interface ICarSeriesDao {
 
     int deleteBySeriesId(Long seriesId);
 
-    CarSeriesPO selectBySeriesId(Long seriesId);
+    CarSeriesPO selectById(Long seriesId);
 
     CarSeriesPO selectBySeriesCode(String seriesCode);
 

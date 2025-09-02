@@ -37,7 +37,7 @@ public class CarSeriesCommandServiceTest {
 
     @Test
     public void test_removeCarSeries() {
-        boolean result = carSeriesCommandService.removeCarSeries(new SeriesId("sadasda"));
+        boolean result = carSeriesCommandService.removeCarSeries(new SeriesId(1L));
         log.info("测试成功 result:{}", result);
     }
 

@@ -36,7 +36,7 @@
                 #{groupId}, #{sortOrder}, #{nodePath}, #{nodeLevel}, #{status}, #{creator}, NOW(), NOW())
     </insert>
 
-    <insert id="batchInsert" parameterType="java.util.List">
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO structure_template_node (
         template_id, parent_id, node_code, node_name, node_name_en, node_type, category_id, group_id,
         sort_order, node_path, node_level, status, creator, created_time, updated_time

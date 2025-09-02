@@ -1,11 +1,11 @@
 package cn.cug.sxy.infrastructure.converter;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceEntity;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceCode;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.infrastructure.dao.po.InstanceStructurePO;
 
 import java.util.Collections;

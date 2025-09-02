@@ -1,7 +1,6 @@
 package cn.cug.sxy.infrastructure.adapter.repository;
 
 import cn.cug.sxy.domain.structure.adapter.repository.ITemplateNodeRepository;
-import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
 import cn.cug.sxy.infrastructure.converter.TemplateStructureNodeConverter;
@@ -9,11 +8,11 @@ import cn.cug.sxy.infrastructure.dao.ITemplateStructureNodeDao;
 import cn.cug.sxy.infrastructure.dao.po.TemplateStructureNodePO;
 import cn.cug.sxy.infrastructure.redis.IRedisService;
 import cn.cug.sxy.types.common.Constants;
+import cn.cug.sxy.types.enums.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

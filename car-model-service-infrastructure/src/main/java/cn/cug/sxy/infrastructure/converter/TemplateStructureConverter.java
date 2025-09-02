@@ -1,7 +1,7 @@
 package cn.cug.sxy.infrastructure.converter;
 
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateEntity;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.domain.structure.model.valobj.TemplateCode;
 import cn.cug.sxy.domain.structure.model.valobj.TemplateId;
 import cn.cug.sxy.infrastructure.dao.po.TemplateStructurePO;

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IUsageConfigCombinationDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.UsageConfigCombinationPO">
+        <id column="id" property="id"/>
+        <result column="usage_id" property="usageId"/>
+        <result column="combination_name" property="combinationName"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, usage_id, combination_name, sort_order, created_time, updated_time
+    </sql>
+
+    <!-- 插入用法配置组合 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.UsageConfigCombinationPO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO usage_config_combination (
+            usage_id, combination_name, sort_order, created_time, updated_time
+        ) VALUES (
+                     #{usageId}, #{combinationName}, #{sortOrder}, #{createdTime}, #{updatedTime}
+                 )
+    </insert>
+
+    <!-- 更新用法配置组合 -->
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.UsageConfigCombinationPO">
+        UPDATE usage_config_combination
+        <set>
+            <if test="combinationName != null and combinationName.length() > 0">
+                combination_name = #{combinationName},
+            </if>
+            <if test="sortOrder != null">
+                sort_order = #{sortOrder},
+            </if>
+            updated_time = #{updatedTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询用法配置组合 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_config_combination
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用法ID查询所有配置组合 -->
+    <select id="selectByUsageId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_config_combination
+        WHERE usage_id = #{usageId}
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <!-- 删除用法配置组合 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM usage_config_combination
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用法ID删除所有配置组合 -->
+    <delete id="deleteByUsageId" parameterType="java.lang.Long">
+        DELETE
+        FROM usage_config_combination
+        WHERE usage_id = #{usageId}
+    </delete>
+
+</mapper>

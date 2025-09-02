@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/30 09:05
@@ -18,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemplateNewVersionRequestDTO {
+public class TemplateNewVersionRequestDTO implements Serializable {
 
     /**
      * 模版ID

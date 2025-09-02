@@ -23,6 +23,10 @@ public class RedisClientConfigProperties {
      */
     private int port;
     /**
+     * 用户名
+     */
+    private String username;
+    /**
      * 账密
      */
     private String password;

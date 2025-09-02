@@ -2,6 +2,8 @@ package cn.cug.sxy.api.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/31 15:56
@@ -10,7 +12,7 @@ import lombok.Data;
  */
 
 @Data
-public class InstanceQueryRequestDTO {
+public class InstanceQueryRequestDTO implements Serializable {
 
     /**
      * 实例编码

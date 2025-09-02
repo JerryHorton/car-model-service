@@ -23,7 +23,7 @@ public class StructureInstancePageVO {
      */
     private List<StructureInstanceEntity> instances;
     /**
-     * 总条数
+     * 总记录数
      */
     private Long total;
     /**

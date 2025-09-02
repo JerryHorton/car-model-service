@@ -3,11 +3,13 @@ package cn.cug.sxy.infrastructure.adapter.repository;
 import cn.cug.sxy.domain.structure.adapter.repository.IInstanceNodeRepository;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
+import cn.cug.sxy.domain.usage.model.valobj.UsageId;
 import cn.cug.sxy.infrastructure.converter.InstanceStructureNodeConverter;
 import cn.cug.sxy.infrastructure.dao.IInstanceStructureNodeDao;
 import cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO;
 import cn.cug.sxy.infrastructure.redis.IRedisService;
 import cn.cug.sxy.types.common.Constants;
+import cn.cug.sxy.types.enums.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
@@ -102,12 +104,21 @@ public class InstanceNodeRepository extends AbstractRepository implements IInsta
             return 0;
         }
         StructureInstanceNodeEntity node = nodeOpt.get();
-        node.updateStatus(status);
-        InstanceStructureNodePO po = InstanceStructureNodeConverter.toPO(node);
-        int result = instanceStructureNodeDao.updateStatus(po);
-        // 删除缓存
+
+        return updateStatus(node, status);
+    }
+
+    @Override
+    public int updateStatus(StructureInstanceNodeEntity node, Status status) {
+        // 通过节点路径更新状态（当前节点与子节点）
+        InstanceStructureNodePO po = new InstanceStructureNodePO();
+        po.setStatus(status.getCode());
+        String nodePathPrefix = node.getNodePath() + "%";
+        po.setNodePath(nodePathPrefix);
+        int result = instanceStructureNodeDao.updateStatusByNodePathStartWith(po);
+        // 清理相关缓存
         if (result > 0) {
-            clearCache(node);
+            clearCacheWithChild(node);
         }
 
         return result;
@@ -150,6 +161,21 @@ public class InstanceNodeRepository extends AbstractRepository implements IInsta
         }
 
         return result;
+    }
+
+    @Override
+    public int updateStatusByUsageId(UsageId usageId, Status status) {
+        if (usageId == null || status == null) {
+            return 0;
+        }
+        // 先查询关联的节点，用于清理缓存
+        Optional<StructureInstanceNodeEntity> nodeOpt = findByUsageId(usageId);
+        if (!nodeOpt.isPresent()) {
+            return 0;
+        }
+        StructureInstanceNodeEntity node = nodeOpt.get();
+
+        return updateStatus(node, status);
     }
 
     @Override
@@ -320,6 +346,20 @@ public class InstanceNodeRepository extends AbstractRepository implements IInsta
     }
 
     @Override
+    public Optional<StructureInstanceNodeEntity> findByUsageId(UsageId usageId) {
+        if (usageId == null) {
+            return Optional.empty();
+        }
+        InstanceStructureNodePO po = instanceStructureNodeDao.selectByUsageId(usageId.getId());
+        if (po == null) {
+            return Optional.empty();
+        }
+        StructureInstanceNodeEntity entity = InstanceStructureNodeConverter.toEntity(po);
+
+        return Optional.of(entity);
+    }
+
+    @Override
     public int deleteById(InstanceNodeId nodeId) {
         // 先查询节点获取实例ID
         Optional<StructureInstanceNodeEntity> nodeOpt = findById(nodeId);
@@ -334,6 +374,14 @@ public class InstanceNodeRepository extends AbstractRepository implements IInsta
         }
 
         return result;
+    }
+
+    @Override
+    public int deleteByUsageId(UsageId usageId) {
+        if (usageId == null) {
+            return 0;
+        }
+        return instanceStructureNodeDao.deleteByUsageId(usageId.getId());
     }
 
     @Override
@@ -428,6 +476,20 @@ public class InstanceNodeRepository extends AbstractRepository implements IInsta
         // 清除父节点的子节点列表缓存
         if (node.getParentId() != null) {
             redisService.remove(getNodesByParentIdCacheKey(node.getParentId().getId()));
+        }
+    }
+
+    /**
+     * 清除节点相关的所有缓存，包括子节点
+     */
+    private void clearCacheWithChild(StructureInstanceNodeEntity node) {
+        if (node == null) {
+            return;
+        }
+        clearCache(node);
+        List<StructureInstanceNodeEntity> children = findByParentId(node.getId());
+        for (StructureInstanceNodeEntity child : children) {
+            clearCacheWithChild(child);
         }
     }
 

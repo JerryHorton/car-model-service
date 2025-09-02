@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/31 15:55
@@ -13,7 +15,7 @@ import lombok.Data;
  */
 
 @Data
-public class InstanceCreateRequestDTO {
+public class InstanceCreateRequestDTO implements Serializable {
 
     /**
      * 实例编码

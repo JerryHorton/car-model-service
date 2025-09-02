@@ -1,10 +1,10 @@
 package cn.cug.sxy.domain.structure.model.entity;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceCode;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

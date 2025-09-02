@@ -4,17 +4,19 @@ import cn.cug.sxy.api.IStructureInstanceService;
 import cn.cug.sxy.api.dto.*;
 import cn.cug.sxy.api.response.Response;
 import cn.cug.sxy.api.vo.*;
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
 import cn.cug.sxy.domain.structure.service.IInstanceService;
 import cn.cug.sxy.types.enums.ResponseCode;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.types.exception.AppException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 @RestController
 @CrossOrigin("*")
 @RequestMapping("/api/v1/structure/instance/")
+@DubboService(version = "1.0")
 public class StructureInstanceController implements IStructureInstanceService {
 
     private final IInstanceService instanceService;
@@ -154,7 +157,8 @@ public class StructureInstanceController implements IStructureInstanceService {
                     .data(InstanceBasePageVO.builder()
                             .pageNo(instancePage.getCurrentPage())
                             .pageSize(pageSize)
-                            .totalPages(instancePage.getTotal())
+                            .total(instancePage.getTotal())
+                            .totalPages(instancePage.getTotalPages())
                             .instances(instancePage.getInstances().stream()
                                     .map(this::convertToInstanceBaseVO)
                                     .collect(Collectors.toList()))
@@ -305,6 +309,39 @@ public class StructureInstanceController implements IStructureInstanceService {
                     .code(ResponseCode.UN_ERROR.getCode())
                     .info(ResponseCode.UN_ERROR.getInfo())
                     .data(false)
+                    .build();
+        }
+    }
+
+    @RequestMapping(value = "query_child_node", method = RequestMethod.GET)
+    @Override
+    public Response<List<InstanceNodeVO>> queryChildNode(@RequestParam Long parentId) {
+        try {
+            log.info("查询车型结构树实例节点子节点 parentId={}", parentId);
+            if (parentId == null) {
+                throw new AppException(ResponseCode.ILLEGAL_PARAMETER);
+            }
+            List<StructureInstanceNodeEntity> childNodes = instanceService.findChildNodes(new InstanceNodeId(parentId));
+            List<InstanceNodeVO> instanceNodeVOS = childNodes.stream().map(this::convertToNodeVO).toList();
+            log.info("查询车型结构树实例节点子节点成功 parentId={}", parentId);
+            return Response.<List<InstanceNodeVO>>builder()
+                    .code(ResponseCode.SUCCESS.getCode())
+                    .info(ResponseCode.SUCCESS.getInfo())
+                    .data(instanceNodeVOS)
+                    .build();
+        } catch (AppException e) {
+            log.error("查询车型结构树实例节点子节点失败 parentId={}", parentId, e);
+
+            return Response.<List<InstanceNodeVO>>builder()
+                    .code(e.getCode())
+                    .info(e.getInfo())
+                    .build();
+        } catch (Exception e) {
+            log.error("查询车型结构树实例节点子节点异常 parentId={}", parentId, e);
+
+            return Response.<List<InstanceNodeVO>>builder()
+                    .code(ResponseCode.UN_ERROR.getCode())
+                    .info(ResponseCode.UN_ERROR.getInfo())
                     .build();
         }
     }
@@ -606,7 +643,7 @@ public class StructureInstanceController implements IStructureInstanceService {
     }
 
     /**
-     * 构建树形结构
+     * 构建完整树形结构
      */
     private List<InstanceNodeTreeVO> buildNodeTree(List<StructureInstanceNodeEntity> nodes) {
         // 先构建节点映射

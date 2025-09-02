@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/29 16:41
@@ -16,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemplateQueryRequestDTO {
+public class TemplateQueryRequestDTO implements Serializable {
 
     /**
      * 模板编码

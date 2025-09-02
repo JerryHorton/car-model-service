@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/30 10:51
@@ -17,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemplateMoveNodeRequestDTO {
+public class TemplateMoveNodeRequestDTO implements Serializable {
 
     /**
      * 节点ID

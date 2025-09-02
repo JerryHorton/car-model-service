@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IUsageDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.UsagePO">
+        <id column="id" property="id"/>
+        <result column="usage_name" property="usageName"/>
+        <result column="exploded_view_img" property="explodedViewImg"/>
+        <result column="download_url" property="downloadUrl"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, usage_name, exploded_view_img, download_url, status, creator, created_time, updated_time
+    </sql>
+
+    <!-- 插入用法 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.UsagePO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO `usage` (usage_name, exploded_view_img, status, creator, created_time, updated_time)
+        VALUES (#{usageName}, #{explodedViewImg}, #{status}, #{creator}, #{createdTime}, #{updatedTime})
+    </insert>
+
+    <!-- 更新用法 -->
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.UsagePO">
+        UPDATE `usage`
+        <set>
+            <if test="usageName != null and usageName.length() > 0">
+                usage_name = #{usageName},
+            </if>
+            <if test="explodedViewImg != null and explodedViewImg.length() > 0">
+                exploded_view_img = #{explodedViewImg},
+            </if>
+            <if test="downloadUrl != null and downloadUrl.length() > 0">
+                download_url = #{downloadUrl},
+            </if>
+            <if test="status != null and status.length() > 0">
+                status = #{status},
+            </if>
+            updated_time = #{updatedTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用法状态 -->
+    <update id="updateStatus" parameterType="cn.cug.sxy.infrastructure.dao.po.UsagePO">
+        UPDATE `usage`
+        SET status       = #{status},
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询用法 -->
+    <select id="selectById" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `usage`
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" parameterType="java.util.List" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `usage`
+        WHERE id IN
+        <foreach collection="usageIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 根据名称模糊查询用法 -->
+    <select id="selectByNameLike" parameterType="java.lang.String" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `usage`
+        WHERE usage_name LIKE #{nameKeyword}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询所有可用的用法 -->
+    <select id="selectAllEnabled" resultMap="dataMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `usage`
+        WHERE status = 'ENABLED'
+        ORDER BY id ASC
+    </select>
+
+    <!-- 删除用法 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM `usage`
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -4,7 +4,7 @@ import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceId;
 import cn.cug.sxy.domain.structure.model.valobj.InstanceNodeId;
 import cn.cug.sxy.domain.structure.model.valobj.NodeType;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.infrastructure.dao.po.InstanceStructureNodePO;
 
 import java.util.Collections;

@@ -3,6 +3,8 @@ package cn.cug.sxy.api.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/31 16:03
@@ -11,7 +13,7 @@ import lombok.Data;
  */
 
 @Data
-public class InstanceMoveNodeRequestDTO {
+public class InstanceMoveNodeRequestDTO implements Serializable {
 
     /**
      * 节点ID

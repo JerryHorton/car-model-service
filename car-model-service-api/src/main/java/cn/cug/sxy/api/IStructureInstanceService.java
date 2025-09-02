@@ -4,6 +4,8 @@ import cn.cug.sxy.api.dto.*;
 import cn.cug.sxy.api.response.Response;
 import cn.cug.sxy.api.vo.*;
 
+import java.util.List;
+
 /**
  * @version 1.0
  * @Date 2025/7/31 15:53
@@ -60,6 +62,14 @@ public interface IStructureInstanceService {
      * @return 移动结果
      */
     Response<Boolean> moveNode(InstanceMoveNodeRequestDTO requestDTO);
+
+    /**
+     * 查询实例节点的子节点
+     *
+     * @param parentId 父节点ID
+     * @return 实例节点VO列表
+     */
+    Response<List<InstanceNodeVO>> queryChildNode(Long parentId);
 
     /**
      * 删除节点

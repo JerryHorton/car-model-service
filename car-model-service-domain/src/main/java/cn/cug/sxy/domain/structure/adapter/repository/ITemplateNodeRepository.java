@@ -2,7 +2,7 @@ package cn.cug.sxy.domain.structure.adapter.repository;
 
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.NodeType;
-import cn.cug.sxy.domain.structure.model.valobj.Status;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.domain.structure.model.valobj.TemplateId;
 import cn.cug.sxy.domain.structure.model.valobj.TemplateNodeId;
 

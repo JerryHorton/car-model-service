@@ -16,31 +16,86 @@ thread:
 spring:
   datasource:
     username: root
-    password: 123456
-    url: jdbc:mysql://127.0.0.1:13306/car_model?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    # password: 123456
+    password: root123
+    # url: jdbc:mysql://127.0.0.1:13306/car_model?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    url: jdbc:mysql://192.168.2.9:3307/car_model?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-  hikari:
-    pool-name: Retail_HikariCP
-    minimum-idle: 15 #最小空闲连接数量
-    idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
-    maximum-pool-size: 25 #连接池最大连接数，默认是10
-    auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
-    max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
-    connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
-    connection-test-query: SELECT 1
-  type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Retail_HikariCP
+      minimum-idle: 15 #最小空闲连接数量
+      idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
+      maximum-pool-size: 25 #连接池最大连接数，默认是10
+      auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
+      connection-test-query: SELECT 1
+    type: com.zaxxer.hikari.HikariDataSource
+
+  # RabbitMQ配置
+  rabbitmq:
+    host: 192.168.2.9
+    port: 5672
+    username: admin
+    password: admin
+    topic:
+      default: default
+      model-icon-upload: model-icon-upload
+    deadletter:
+      handler:
+        type: dynamic  # 使用动态处理器
+      queues:
+        - "file.upload.dlq"
+    modules:
+      default:
+        exchange: default.exchange
+        retry-exchange: default.retry.exchange
+        dlx-exchange: default.dlx.exchange
+
+        queue: default.queue
+        retry-queue: default.retry.queue
+        dlq: default.dlq
+
+        routing-key: default
+        retry-routing-key: default.retry
+        dlq-routing-key: default.dlq
+
+        ttl:
+          main: 1800000   # 主队列TTL 30分钟
+          retry: 60000    # 重试队列TTL 1分钟
+
+      file-upload:
+        exchange: file.upload.exchange
+        retry-exchange: file.upload.retry.exchange
+        dlx-exchange: file.upload.dlx.exchange
+
+        queue: file.upload.queue
+        retry-queue: file.upload.retry.queue
+        dlq: file.upload.dlq
+
+        routing-key: file.upload
+        retry-routing-key: file.upload.retry
+        dlq-routing-key: file.upload.dlq
+
+        ttl:
+          main: 1800000   # 主队列TTL 30分钟
+          retry: 60000    # 重试队列TTL 1分钟
 
 # MyBatis 配置【如需使用记得打开】
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
-  config-location:  classpath:/mybatis/config/mybatis-config.xml
+  config-location: classpath:/mybatis/config/mybatis-config.xml
 
 # Redis
 redis:
   sdk:
     config:
-      host: 127.0.0.1
-      port: 16379
+      # host: 127.0.0.1
+      host: 192.168.2.9
+      # port: 16379
+      port: 6380
+      username: default
+      password: yourpassword123
       pool-size: 50
       min-idle-size: 10
       idle-timeout: 30000
@@ -57,9 +112,36 @@ vin:
     default-port: example
     ports:
       default:
-              enabled: true
-              priority: 10
-              base-url: https://car/
+        enabled: true
+        priority: 10
+        base-url: https://car/
+
+# MinIO配置
+minio:
+  # MinIO服务地址
+  # endpoint: http://localhost:9000
+  endpoint: http://192.168.2.9:9000
+  # 访问密钥
+  # access-key: minioadmin
+  access-key: admin
+  # 秘密密钥
+  # secret-key: minioadmin
+  secret-key: admin123456
+  # 存储桶名称
+  bucket-name: car-model-service
+
+dubbo:
+  application:
+    name: car-model-service
+    version: 1.0
+  registry:
+    id: nacos-registry
+    address: nacos://192.168.2.9:8848
+  protocol:
+    name: dubbo
+    port: 20880
+  scan:
+    base-packages: cn.cug.sxy.api
 
 # 日志
 logging:

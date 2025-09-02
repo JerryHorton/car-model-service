@@ -1,10 +1,11 @@
 package cn.cug.sxy.domain.structure.service;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
+import cn.cug.sxy.types.enums.Status;
 
 import java.time.LocalDateTime;
 import java.util.List;

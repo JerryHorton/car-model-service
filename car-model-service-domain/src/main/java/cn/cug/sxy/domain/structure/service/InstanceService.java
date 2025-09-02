@@ -1,6 +1,6 @@
 package cn.cug.sxy.domain.structure.service;
 
-import cn.cug.sxy.domain.model.model.valobj.ModelId;
+import cn.cug.sxy.domain.series.model.valobj.ModelId;
 import cn.cug.sxy.domain.series.model.valobj.SeriesId;
 import cn.cug.sxy.domain.structure.adapter.repository.IInstanceNodeRepository;
 import cn.cug.sxy.domain.structure.adapter.repository.IInstanceRepository;
@@ -11,6 +11,7 @@ import cn.cug.sxy.domain.structure.model.entity.StructureInstanceNodeEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
+import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.types.exception.AppException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;

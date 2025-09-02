@@ -3,6 +3,7 @@ package cn.cug.sxy.domain.structure.service;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateEntity;
 import cn.cug.sxy.domain.structure.model.entity.StructureTemplateNodeEntity;
 import cn.cug.sxy.domain.structure.model.valobj.*;
+import cn.cug.sxy.types.enums.Status;
 
 import java.util.List;
 import java.util.Map;

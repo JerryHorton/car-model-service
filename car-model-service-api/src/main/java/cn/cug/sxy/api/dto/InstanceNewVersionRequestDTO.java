@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @Date 2025/7/31 16:00
@@ -12,7 +14,7 @@ import lombok.Data;
  */
 
 @Data
-public class InstanceNewVersionRequestDTO {
+public class InstanceNewVersionRequestDTO implements Serializable {
 
     /**
      * 实例ID

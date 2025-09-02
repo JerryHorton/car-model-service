@@ -31,9 +31,7 @@ public class CarSeriesCommandService implements ICarSeriesCommandService {
 
     @Override
     public CarSeriesEntity createCarSeries(SeriesCode seriesCode, Brand brand, String seriesName, String description) {
-        logger.info("创建车系 seriesCode={}, brand={}, seriesName={}, description={}", seriesCode, brand, seriesName, description);
         if (carSeriesRepository.existsByCode(seriesCode)) {
-            logger.warn("创建车系失败，车系编码已存在 seriesCode={}", seriesCode);
             throw new AppException(ResponseCode.CAR_SERIES_CODE_EXISTS_ERROR);
         }
         CarSeriesEntity carSeriesEntity = CarSeriesEntity.create(
@@ -42,29 +40,18 @@ public class CarSeriesCommandService implements ICarSeriesCommandService {
                 seriesName,
                 description
         );
-        carSeriesRepository.save(carSeriesEntity);
-        logger.info("创建车系成功 seriesCode={}, brand={}, seriesName={}, description={}", seriesCode, brand, seriesName, description);
 
-        return carSeriesEntity;
+        return carSeriesRepository.save(carSeriesEntity);
     }
 
     @Override
     public boolean removeCarSeries(SeriesId seriesId) {
-        logger.info("删除车系 seriesId={}", seriesId);
-        boolean removed = carSeriesRepository.remove(seriesId);
-        logger.info("删除车系 seriesId={}, removed={}", seriesId, removed);
-
-        return removed;
+        return carSeriesRepository.remove(seriesId);
     }
 
     @Override
     public int updateCarSeries(CarSeriesEntity carSeriesEntity) {
-        SeriesId seriesId = carSeriesEntity.getId();
-        logger.info("更新车系 seriesId={}", seriesId);
-        int updateCount = carSeriesRepository.update(carSeriesEntity);
-        logger.info("更新车系成功 seriesId={}, updateCount={}", seriesId, updateCount);
-
-        return updateCount;
+        return carSeriesRepository.update(carSeriesEntity);
     }
 
 }

@@ -4,7 +4,6 @@
 
     <resultMap id="dataMap" type="cn.cug.sxy.infrastructure.dao.po.CarModelPO">
         <id column="id" property="id"/>
-        <result column="model_id" property="modelId"/>
         <result column="model_code" property="modelCode"/>
         <result column="model_name" property="modelName"/>
         <result column="brand" property="brand"/>
@@ -12,102 +11,72 @@
         <result column="status" property="status"/>
         <result column="series_id" property="seriesId"/>
         <result column="icon_path" property="iconPath"/>
+        <result column="download_url" property="downloadUrl"/>
         <result column="created_time" property="createdTime"/>
         <result column="updated_time" property="updatedTime"/>
     </resultMap>
 
-    <select id="countByModelCode" parameterType="string" resultType="int">
+    <sql id="Base_Column_List">
+        id, model_code, model_name, brand, power_type, status, series_id, icon_path, download_url, created_time, updated_time
+    </sql>
+
+    <select id="countByModelCode" parameterType="java.lang.String" resultType="int">
         select count(*)
         from car_models
         where model_code = #{modelCode}
     </select>
 
-    <select id="selectByModelCode" parameterType="string" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+    <select id="selectByModelCode" parameterType="java.lang.String" resultMap="dataMap">
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where model_code = #{modelCode}
     </select>
 
     <select id="selectByBrand" parameterType="java.lang.String" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where brand = #{brand}
     </select>
 
     <select id="selectByPowerType" parameterType="java.lang.String" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where power_type = #{powerType}
     </select>
 
     <select id="selectByStatus" parameterType="java.lang.String" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where status = #{status}
     </select>
 
-        <select id="selectBySeriesId" parameterType="java.lang.String" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+    <select id="selectAll" resultMap="dataMap">
+        select
+        <include refid="Base_Column_List"/>
+        from car_models
+    </select>
+
+    <select id="selectBySeriesId" parameterType="java.lang.Long" resultMap="dataMap">
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where series_id = #{seriesId}
     </select>
 
+    <select id="selectByModelId" parameterType="java.lang.Long" resultMap="dataMap">
+        select
+        <include refid="Base_Column_List"/>
+        from car_models
+        where id = #{modelId}
+    </select>
+
     <select id="selectByModelNameLike" parameterType="java.lang.String" resultMap="dataMap">
-        select model_id,
-               model_code,
-               model_name,
-               brand,
-               power_type,
-               status,
-               series_id,
-               icon_path,
-               created_time,
-               updated_time
+        select
+        <include refid="Base_Column_List"/>
         from car_models
         where model_name like #{modelName}
     </select>
@@ -121,21 +90,23 @@
             status       = #{status},
             series_id    = #{seriesId},
             icon_path    = #{iconPath},
+            download_url = #{downloadUrl},
             updated_time = now()
-        where model_id = #{modelId}
+        where id = #{modelId}
     </update>
 
-    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.CarModelPO">
-        insert into car_models (model_id, model_code, model_name, brand, power_type, status, series_id, icon_path,
-                                created_time, updated_time)
-        values (#{modelId}, #{modelCode}, #{modelName}, #{brand}, #{powerType}, #{status}, #{seriesId}, #{iconPath},
-                #{createdTime}, #{updatedTime})
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.CarModelPO" useGeneratedKeys="true"
+            keyProperty="id">
+        insert into car_models (model_code, model_name, brand, power_type, status, series_id, icon_path,
+                                download_url, created_time, updated_time)
+        values (#{modelCode}, #{modelName}, #{brand}, #{powerType}, #{status}, #{seriesId}, #{iconPath},
+                #{downloadUrl}, #{createdTime}, #{updatedTime})
     </insert>
 
     <delete id="deleteByModelId" parameterType="java.lang.String">
         delete
         from car_models
-        where model_id = #{modelId}
+        where id = #{modelId}
     </delete>
 
 </mapper>
