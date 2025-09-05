@@ -1,5 +1,6 @@
 package cn.cug.sxy.infrastructure.minio;
 
+import cn.cug.sxy.types.enums.TemplateFileType;
 import cn.cug.sxy.types.exception.AppException;
 import io.minio.*;
 import io.minio.errors.*;
@@ -146,14 +147,14 @@ public class MinIOFileStorageService implements IFileStorageService {
     }
 
     @Override
-    public String uploadTemplate(MultipartFile file) {
+    public String uploadTemplate(MultipartFile file, String templateFileType) {
         try {
-            log.info("开始上传工时批量上传模板 fileName={}, fileSize={}",
+            log.info("开始上传上传模板 fileName={}, fileSize={}",
                     file.getOriginalFilename(), file.getSize());
             // 文件校验
             validateTemplateFile(file);
             // 生成模板存储路径
-            String objectName = generateTemplatePath();
+            String objectName = TemplateFileType.fromType(templateFileType).generateTemplatePath();
             // 上传文件到MinIO
             try (InputStream inputStream = file.getInputStream()) {
                 minioClient.putObject(
@@ -165,7 +166,7 @@ public class MinIOFileStorageService implements IFileStorageService {
                                 .build()
                 );
             }
-            log.info("工时批量上传模板上传成功 objectName={}", objectName);
+            log.info("模板上传成功 objectName={}", objectName);
 
             return String.format("模板上传成功，存储路径: %s", objectName);
         } catch (Exception e) {
@@ -270,63 +271,66 @@ public class MinIOFileStorageService implements IFileStorageService {
     }
 
     @Override
-    public String getTemplateInfo() {
+    public String getTemplateFileInfo(String templateFileType) {
+        String templatePath = TemplateFileType.fromType(templateFileType).generateTemplatePath();
         try {
             StatObjectResponse stat = minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(generateTemplatePath())
+                            .object(templatePath)
                             .build()
             );
 
             return String.format("模板文件: %s, 大小: %d bytes, 最后修改: %s",
-                    generateTemplatePath(),
+                    templatePath,
                     stat.size(),
                     stat.lastModified());
         } catch (Exception e) {
-            log.warn("获取工时模板信息失败", e);
+            log.warn("获取模板信息失败", e);
             return "模板文件不存在或获取信息失败";
         }
     }
 
-    public boolean isTemplateExists() {
+    public boolean isTemplateExists(String templateFileType) {
+        String templatePath = TemplateFileType.fromType(templateFileType).generateTemplatePath();
         try {
             minioClient.statObject(
                     io.minio.StatObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(generateTemplatePath())
+                            .object(templatePath)
                             .build()
             );
             return true;
         } catch (Exception e) {
-            log.warn("工时模板文件不存在 bucket={}, key={}", bucketName, generateTemplatePath());
+            log.warn("模板文件不存在 bucket={}, key={}", bucketName, templatePath);
             return false;
         }
     }
 
     @Override
-    public byte[] getWorkHourTemplate() throws IOException {
+    public byte[] getTemplateFile(String templateFileType) throws IOException {
+        String templatePath = TemplateFileType.fromType(templateFileType).generateTemplatePath();
         try {
-            log.info("从MinIO获取工时批量上传模板 bucket={}, key={}", bucketName, generateTemplatePath());
+            log.info("从MinIO获取模板 bucket={}, key={}", bucketName, templatePath);
             // 从MinIO获取模板文件
             InputStream inputStream = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(generateTemplatePath())
+                            .object(templatePath)
                             .build()
             );
             // 读取输入流到字节数组
             byte[] templateData = inputStream.readAllBytes();
             inputStream.close();
-            log.info("成功从MinIO获取工时模板，文件大小: {} bytes", templateData.length);
+            log.info("成功从MinIO获取模板，文件大小: {} bytes", templateData.length);
 
             return templateData;
         } catch (MinioException e) {
-            log.error("从MinIO获取工时模板失败", e);
-            throw new IOException("获取工时模板失败: " + e.getMessage(), e);
+            log.error("从MinIO获取模板失败", e);
+            throw new IOException("获取模板失败: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("读取工时模板异常", e);
-            throw new IOException("读取工时模板异常: " + e.getMessage(), e);
+            log.error("读取模板异常", e);
+            throw new IOException("读取模板异常: " + e.getMessage(), e);
         }
     }
 
@@ -397,14 +401,5 @@ public class MinIOFileStorageService implements IFileStorageService {
         }
     }
 
-    /**
-     * 生成模板文件存储路径
-     *
-     * @return 存储路径
-     */
-    private String generateTemplatePath() {
-        // 固定路径: templates/workhour/template.xlsx
-        return "templates/workhour/template.xlsx";
-    }
 
 }

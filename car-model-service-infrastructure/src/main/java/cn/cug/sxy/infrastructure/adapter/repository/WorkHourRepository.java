@@ -1,21 +1,26 @@
 package cn.cug.sxy.infrastructure.adapter.repository;
 
+import cn.cug.sxy.domain.part.model.valobj.PartId;
 import cn.cug.sxy.domain.workhour.adapter.repository.IWorkHourRepository;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
 import cn.cug.sxy.domain.workhour.model.valobj.*;
 import cn.cug.sxy.infrastructure.converter.WorkHourConverter;
+import cn.cug.sxy.infrastructure.dao.IPartHourDao;
 import cn.cug.sxy.infrastructure.dao.IWorkHourDao;
+import cn.cug.sxy.infrastructure.dao.po.PartHourPO;
 import cn.cug.sxy.infrastructure.dao.po.WorkHourPO;
 import cn.cug.sxy.infrastructure.local.excel.WorkHourDataValidator;
 import cn.cug.sxy.infrastructure.local.excel.WorkHourExcelRowParser;
 import cn.cug.sxy.infrastructure.minio.IFileStorageService;
 import cn.cug.sxy.infrastructure.local.excel.ExcelUtils;
 import cn.cug.sxy.types.enums.ResponseCode;
+import cn.cug.sxy.types.enums.TemplateFileType;
 import cn.cug.sxy.types.exception.AppException;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,12 +36,15 @@ import java.util.stream.Collectors;
 public class WorkHourRepository implements IWorkHourRepository {
 
     private final IWorkHourDao workHourDao;
+    private final IPartHourDao partHourDao;
     private final IFileStorageService fileStorageService;
 
     public WorkHourRepository(
             IWorkHourDao workHourDao,
+            IPartHourDao partHourDao,
             IFileStorageService fileStorageService) {
         this.workHourDao = workHourDao;
+        this.partHourDao = partHourDao;
         this.fileStorageService = fileStorageService;
     }
 
@@ -151,30 +159,46 @@ public class WorkHourRepository implements IWorkHourRepository {
     }
 
     @Override
-    public List<WorkHourEntity> findWorkHourTree(WorkHourId workHourId) {
+    public WorkHourEntity findWorkHourTree(WorkHourId workHourId) {
         if (workHourId == null) {
-            return List.of();
+            return null;
         }
         // 先查找根节点
         Optional<WorkHourEntity> rootOpt = findById(workHourId);
         if (!rootOpt.isPresent()) {
-            return List.of();
+            return null;
         }
         WorkHourEntity root = rootOpt.get();
         // 递归构建树结构
         buildWorkHourTree(root);
 
-        return List.of(root);
+        return root;
+    }
+
+    @Override
+    public List<WorkHourEntity> findWorkHourTreeByPartId(PartId partId) {
+        if (partId == null) {
+            return List.of();
+        }
+        // 查找关联的工时
+        List<PartHourPO> partHourPOList = partHourDao.selectByPartId(partId.getId());
+        if (partHourPOList.isEmpty()) {
+            return List.of();
+        }
+
+        return partHourPOList.stream()
+                .map(partHourPO -> findWorkHourTree(new WorkHourId(partHourPO.getHourId())))
+                .collect(Collectors.toList());
     }
 
     @Override
     public String uploadTemplate(MultipartFile file) {
-        return fileStorageService.uploadTemplate(file);
+        return fileStorageService.uploadTemplate(file, TemplateFileType.WORK_HOUR.getType());
     }
 
     @Override
     public String getTemplateInfo() {
-        return fileStorageService.getTemplateInfo();
+        return fileStorageService.getTemplateFileInfo(TemplateFileType.WORK_HOUR.getType());
     }
 
     @Override
@@ -184,12 +208,12 @@ public class WorkHourRepository implements IWorkHourRepository {
 
     @Override
     public byte[] getWorkHourTemplate() {
-        boolean exists = fileStorageService.isTemplateExists();
+        boolean exists = fileStorageService.isTemplateExists(TemplateFileType.WORK_HOUR.getType());
         if (!exists) {
             throw new AppException(ResponseCode.TEMPLATE_NOT_FOUND);
         }
         try {
-            return fileStorageService.getWorkHourTemplate();
+            return fileStorageService.getTemplateFile(TemplateFileType.WORK_HOUR.getType());
         } catch (IOException e) {
             throw new AppException(ResponseCode.TEMPLATE_READ_ERROR, e);
         }
@@ -206,6 +230,7 @@ public class WorkHourRepository implements IWorkHourRepository {
      */
     private void buildWorkHourTree(WorkHourEntity parent) {
         List<WorkHourEntity> children = findByParentId(parent.getId());
+        children.sort(Comparator.comparing(WorkHourEntity::getStepOrder));
         if (!children.isEmpty()) {
             // 为每个子节点递归构建子树
             for (WorkHourEntity child : children) {

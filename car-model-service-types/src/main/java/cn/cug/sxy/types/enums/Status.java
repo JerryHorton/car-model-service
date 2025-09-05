@@ -21,14 +21,6 @@ public enum Status {
     private final String code;
     private final String info;
 
-    public String getCode() {
-        return code;
-    }
-
-    public String getInfo() {
-        return info;
-    }
-
     public static Status fromCode(String code) {
         switch (code) {
             case "ENABLED":

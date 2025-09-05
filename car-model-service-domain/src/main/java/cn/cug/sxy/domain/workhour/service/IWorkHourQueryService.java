@@ -1,5 +1,6 @@
 package cn.cug.sxy.domain.workhour.service;
 
+import cn.cug.sxy.domain.part.model.valobj.PartId;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourCode;
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourId;
@@ -70,7 +71,15 @@ public interface IWorkHourQueryService {
      * @param workHourId 工时ID
      * @return 工时树结构
      */
-    List<WorkHourEntity> getWorkHourTree(WorkHourId workHourId);
+    WorkHourEntity getWorkHourTree(WorkHourId workHourId);
+
+    /**
+     * 查询工时树结构
+     *
+     * @param partId 备件ID
+     * @return 工时树结构
+     */
+    List<WorkHourEntity> getWorkHourTreeByPartId(PartId partId);
 
     /**
      * 检查编码是否存在

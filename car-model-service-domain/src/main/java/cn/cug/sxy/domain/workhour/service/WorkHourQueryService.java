@@ -1,5 +1,6 @@
 package cn.cug.sxy.domain.workhour.service;
 
+import cn.cug.sxy.domain.part.model.valobj.PartId;
 import cn.cug.sxy.domain.workhour.adapter.repository.IWorkHourRepository;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourCode;
@@ -60,8 +61,13 @@ public class WorkHourQueryService implements IWorkHourQueryService {
     }
 
     @Override
-    public List<WorkHourEntity> getWorkHourTree(WorkHourId workHourId) {
+    public WorkHourEntity getWorkHourTree(WorkHourId workHourId) {
         return workHourRepository.findWorkHourTree(workHourId);
+    }
+
+    @Override
+    public List<WorkHourEntity> getWorkHourTreeByPartId(PartId partId) {
+        return workHourRepository.findWorkHourTreeByPartId(partId);
     }
 
     @Override

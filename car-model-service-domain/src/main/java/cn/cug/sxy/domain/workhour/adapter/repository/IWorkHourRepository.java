@@ -1,5 +1,6 @@
 package cn.cug.sxy.domain.workhour.adapter.repository;
 
+import cn.cug.sxy.domain.part.model.valobj.PartId;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
 import cn.cug.sxy.domain.workhour.model.valobj.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -102,7 +103,15 @@ public interface IWorkHourRepository {
      * @param workHourId 工时ID
      * @return 工时树结构
      */
-    List<WorkHourEntity> findWorkHourTree(WorkHourId workHourId);
+    WorkHourEntity findWorkHourTree(WorkHourId workHourId);
+
+    /**
+     * 查找工时树结构
+     *
+     * @param partId 部件ID
+     * @return 工时树结构
+     */
+    List<WorkHourEntity> findWorkHourTreeByPartId(PartId partId);
 
     /**
      * 上传工时模板

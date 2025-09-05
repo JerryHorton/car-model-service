@@ -5,6 +5,7 @@ import cn.cug.sxy.api.dto.WorkHourCreateRequestDTO;
 import cn.cug.sxy.api.dto.WorkHourUpdateRequestDTO;
 import cn.cug.sxy.api.response.Response;
 import cn.cug.sxy.api.vo.WorkHourBatchUploadResultVO;
+import cn.cug.sxy.api.vo.WorkHourTreeVO;
 import cn.cug.sxy.api.vo.WorkHourVO;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourBatchUploadResultEntity;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
@@ -13,8 +14,10 @@ import cn.cug.sxy.domain.workhour.model.valobj.WorkHourId;
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourType;
 import cn.cug.sxy.domain.workhour.service.IWorkHourCommandService;
 import cn.cug.sxy.domain.workhour.service.IWorkHourQueryService;
+import cn.cug.sxy.trigger.http.converter.ToVOConverter;
 import cn.cug.sxy.types.enums.ResponseCode;
 import cn.cug.sxy.types.exception.AppException;
+import cn.cug.sxy.types.utils.TemplateFileUtil;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -23,7 +26,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +69,7 @@ public class WorkHourController implements IWorkHourService {
                     WorkHourType.fromCode(requestDTO.getType()),
                     requestDTO.getCreator()
             );
-            WorkHourVO workHourVO = convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("创建主工时成功 id={}, code={}", workHourEntity.getId().getId(), requestDTO.getCode());
 
             return Response.<WorkHourVO>builder()
@@ -104,7 +109,7 @@ public class WorkHourController implements IWorkHourService {
                     requestDTO.getStepOrder(),
                     requestDTO.getCreator()
             );
-            WorkHourVO workHourVO = convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("创建子工时成功 id={}, code={}", workHourEntity.getId().getId(), requestDTO.getCode());
 
             return Response.<WorkHourVO>builder()
@@ -168,7 +173,7 @@ public class WorkHourController implements IWorkHourService {
             return Response.<List<WorkHourBatchUploadResultVO>>builder()
                     .code(ResponseCode.SUCCESS.getCode())
                     .info(ResponseCode.SUCCESS.getInfo())
-                    .data(results.stream().map(this::convertToWorkHourBatchUploadResultVO).collect(Collectors.toList()))
+                    .data(results.stream().map(ToVOConverter::convertToWorkHourBatchUploadResultVO).collect(Collectors.toList()))
                     .build();
         } catch (AppException e) {
             log.error("批量上传子工时失败 parentId={}", parentId, e);
@@ -193,27 +198,7 @@ public class WorkHourController implements IWorkHourService {
             log.info("上传工时批量上传模板 fileName={}, fileSize={}",
                     file.getOriginalFilename(), file.getSize());
             // 验证文件
-            if (file.isEmpty()) {
-                return Response.<String>builder()
-                        .code(ResponseCode.ILLEGAL_PARAMETER.getCode())
-                        .info("上传文件不能为空")
-                        .build();
-            }
-            // 验证文件类型
-            String fileName = file.getOriginalFilename();
-            if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
-                return Response.<String>builder()
-                        .code(ResponseCode.ILLEGAL_PARAMETER.getCode())
-                        .info("只支持Excel文件格式(.xlsx/.xls)")
-                        .build();
-            }
-            // 验证文件大小（限制为2MB）
-            if (file.getSize() > 2 * 1024 * 1024) {
-                return Response.<String>builder()
-                        .code(ResponseCode.ILLEGAL_PARAMETER.getCode())
-                        .info("模板文件大小不能超过2MB")
-                        .build();
-            }
+            TemplateFileUtil.validateTemplateFile(file);
             // 调用服务上传模板
             String result = workHourCommandService.uploadTemplate(file);
             log.info("工时批量上传模板上传成功");
@@ -249,7 +234,9 @@ public class WorkHourController implements IWorkHourService {
             byte[] templateData = workHourQueryService.getWorkHourTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", "工时批量上传模板.xlsx");
+            String filename = "工时批量上传模板.xlsx";
+            String encodedFilename = UriUtils.encode(filename, StandardCharsets.UTF_8);
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFilename);
             headers.setContentLength(templateData.length);
             log.info("工时批量上传模板下载成功，文件大小: {} bytes", templateData.length);
 
@@ -301,7 +288,7 @@ public class WorkHourController implements IWorkHourService {
                     requestDTO.getStandardHours(),
                     requestDTO.getStepOrder()
             );
-            WorkHourVO workHourVO = convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("更新工时成功 workHourId={}", requestDTO.getWorkHourId());
 
             return Response.<WorkHourVO>builder()
@@ -333,7 +320,7 @@ public class WorkHourController implements IWorkHourService {
             log.info("查询所有主工时");
             List<WorkHourEntity> workHourEntities = workHourQueryService.getAllMainWorkHours();
             List<WorkHourVO> workHourVOs = workHourEntities.stream()
-                    .map(this::convertToWorkHourVO)
+                    .map(ToVOConverter::convertToWorkHourVO)
                     .collect(Collectors.toList());
             log.info("查询所有主工时成功，数量={}", workHourVOs.size());
 
@@ -359,7 +346,7 @@ public class WorkHourController implements IWorkHourService {
             log.info("根据父ID查询子工时 parentId={}", parentId);
             List<WorkHourEntity> workHourEntities = workHourQueryService.getByParentId(new WorkHourId(parentId));
             List<WorkHourVO> workHourVOs = workHourEntities.stream()
-                    .map(this::convertToWorkHourVO)
+                    .map(ToVOConverter::convertToWorkHourVO)
                     .collect(Collectors.toList());
             log.info("根据父ID查询子工时成功 parentId={}, 数量={}", parentId, workHourVOs.size());
 
@@ -380,24 +367,29 @@ public class WorkHourController implements IWorkHourService {
 
     @RequestMapping(value = "query_tree", method = RequestMethod.GET)
     @Override
-    public Response<List<WorkHourVO>> queryWorkHourTree(Long workHourId) {
+    public Response<WorkHourTreeVO> queryWorkHourTree(Long workHourId) {
         try {
             log.info("查询工时树结构 workHourId={}", workHourId);
-            List<WorkHourEntity> workHourEntities = workHourQueryService.getWorkHourTree(new WorkHourId(workHourId));
-            List<WorkHourVO> workHourVOs = workHourEntities.stream()
-                    .map(this::convertToWorkHourVO)
-                    .collect(Collectors.toList());
-            log.info("查询工时树结构成功 workHourId={}, 数量={}", workHourId, workHourVOs.size());
+            WorkHourEntity workHourEntity = workHourQueryService.getWorkHourTree(new WorkHourId(workHourId));
+            WorkHourTreeVO workHourTreeVO = ToVOConverter.convertToWorkHourTreeVO(workHourEntity);
+            log.info("查询工时树结构成功 workHourId={}", workHourId);
 
-            return Response.<List<WorkHourVO>>builder()
+            return Response.<WorkHourTreeVO>builder()
                     .code(ResponseCode.SUCCESS.getCode())
                     .info(ResponseCode.SUCCESS.getInfo())
-                    .data(workHourVOs)
+                    .data(workHourTreeVO)
+                    .build();
+        } catch (AppException e) {
+            log.error("查询工时树结构异常 workHourId={}", workHourId, e);
+
+            return Response.<WorkHourTreeVO>builder()
+                    .code(e.getCode())
+                    .info(e.getInfo())
                     .build();
         } catch (Exception e) {
             log.error("查询工时树结构异常 workHourId={}", workHourId, e);
 
-            return Response.<List<WorkHourVO>>builder()
+            return Response.<WorkHourTreeVO>builder()
                     .code(ResponseCode.UN_ERROR.getCode())
                     .info(ResponseCode.UN_ERROR.getInfo())
                     .build();
@@ -413,7 +405,7 @@ public class WorkHourController implements IWorkHourService {
             if (workHourEntity == null) {
                 throw new AppException(ResponseCode.WORK_HOUR_NOT_FOUND_ERROR);
             }
-            WorkHourVO workHourVO = convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("查询工时详情成功 workHourId={}", workHourId);
 
             return Response.<WorkHourVO>builder()
@@ -515,59 +507,6 @@ public class WorkHourController implements IWorkHourService {
                     .info(ResponseCode.UN_ERROR.getInfo())
                     .build();
         }
-    }
-
-    /**
-     * 转换工时实体为VO
-     */
-    private WorkHourVO convertToWorkHourVO(WorkHourEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        WorkHourVO workHourVO = WorkHourVO.builder()
-                .id(entity.getId() != null ? entity.getId().getId() : null)
-                .parentId(entity.getParentId() != null ? entity.getParentId().getId() : null)
-                .code(entity.getCode() != null ? entity.getCode().getCode() : null)
-                .description(entity.getDescription())
-                .standardHours(entity.getStandardHours())
-                .type(entity.getType() != null ? entity.getType().getCode() : null)
-                .typeDescription(entity.getType() != null ? entity.getType().getDescription() : null)
-                .stepOrder(entity.getStepOrder())
-                .status(entity.getStatus() != null ? entity.getStatus().getCode() : null)
-                .statusDescription(entity.getStatus() != null ? entity.getStatus().getDescription() : null)
-                .creator(entity.getCreator())
-                .isMainWorkHour(entity.isMainWorkHour())
-                .isSubWorkHour(entity.isSubWorkHour())
-                .build();
-        // 递归转换子工时
-        if (entity.getChildren() != null && !entity.getChildren().isEmpty()) {
-            List<WorkHourVO> childrenVOs = entity.getChildren().stream()
-                    .map(this::convertToWorkHourVO)
-                    .collect(Collectors.toList());
-            workHourVO.setChildren(childrenVOs);
-        }
-
-        return workHourVO;
-    }
-
-    /**
-     * 转换批量上传结果实体为VO
-     */
-    private WorkHourBatchUploadResultVO convertToWorkHourBatchUploadResultVO(WorkHourBatchUploadResultEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        return WorkHourBatchUploadResultVO.builder()
-                .rowNumber(entity.getRowNumber())
-                .code(entity.getCode())
-                .description(entity.getDescription())
-                .standardHours(entity.getStandardHours())
-                .stepOrder(entity.getStepOrder())
-                .success(entity.getSuccess())
-                .errorMessage(entity.getErrorMessage())
-                .workHourId(entity.getWorkHourId())
-                .build();
     }
 
 } 

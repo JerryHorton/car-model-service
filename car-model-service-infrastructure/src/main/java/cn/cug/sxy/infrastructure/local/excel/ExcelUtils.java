@@ -2,6 +2,7 @@ package cn.cug.sxy.infrastructure.local.excel;
 
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourExcelData;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -87,7 +88,7 @@ public class ExcelUtils {
         }
         for (int i = 0; i < columnCount; i++) {
             Cell cell = row.getCell(i);
-            if (cell != null && !getCellValueAsString(cell).trim().isEmpty()) {
+            if (cell != null && StringUtils.isNotBlank(cell.getStringCellValue())) {
                 return false;
             }
         }

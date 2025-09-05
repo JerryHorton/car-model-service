@@ -461,6 +461,16 @@ const app = createApp({
                     // 用法管理页面，无需额外加载数据
                     console.log('切换到用法管理页面');
                     break;
+                case 'part':
+                    // 备件管理页面，加载备件列表
+                    console.log('切换到备件管理页面');
+                    refreshParts();
+                    break;
+                case 'workhour':
+                    // 工时管理页面，加载工时列表
+                    console.log('切换到工时管理页面');
+                    refreshWorkHours();
+                    break;
             }
         };
         
@@ -2833,6 +2843,1161 @@ const app = createApp({
             document.removeEventListener('keydown', hideContextMenu);
         });
 
+        // 备件管理相关数据和方法
+        const partSearch = reactive({
+            keyword: '',
+            status: ''
+        });
+        const parts = ref([]);
+        const partLoading = ref(false);
+
+        // 备件对话框
+        const partDialog = reactive({
+            visible: false,
+            isEdit: false,
+            loading: false,
+            form: {
+                id: null,
+                partCode: '',
+                partName: '',
+                creator: currentUser,
+                remark: ''
+            },
+            rules: {
+                partCode: [
+                    { required: true, message: '请输入备件编码', trigger: 'blur' }
+                ],
+                partName: [
+                    { required: true, message: '请输入备件名称', trigger: 'blur' }
+                ],
+                creator: [
+                    { required: true, message: '请输入创建人', trigger: 'blur' }
+                ]
+            }
+        });
+
+        // 备件详情对话框
+const partDetailDialog = reactive({
+    visible: false,
+    data: null,
+    workHourTree: [] // 工时树数据
+});
+
+        // 批量绑定工时对话框
+        const batchBindDialog = reactive({
+            visible: false,
+            loading: false,
+            form: {
+                file: null,
+                creator: currentUser
+            },
+            rules: {
+                creator: [
+                    { required: true, message: '请输入创建人', trigger: 'blur' }
+                ]
+            }
+        });
+
+        // 上传模板对话框
+        const uploadTemplateDialog = reactive({
+            visible: false,
+            loading: false,
+            form: {
+                file: null
+            }
+        });
+
+        // 批量绑定结果对话框
+        const batchBindResultDialog = reactive({
+            visible: false,
+            results: [],
+            successCount: 0,
+            failCount: 0
+        });
+
+        // 表单引用
+        const partFormRef = ref(null);
+        const batchBindFormRef = ref(null);
+        const uploadTemplateFormRef = ref(null);
+
+        // 刷新备件列表
+        const refreshParts = async () => {
+            partLoading.value = true;
+            try {
+                console.log('获取所有备件');
+                const data = await request('/api/v1/part/list_parts');
+                parts.value = data || [];
+                console.log('获取备件列表成功，数量:', parts.value.length);
+            } catch (error) {
+                console.error('获取备件列表失败:', error);
+                parts.value = [];
+            } finally {
+                partLoading.value = false;
+            }
+        };
+
+        // 搜索备件
+        const searchParts = async () => {
+            partLoading.value = true;
+            try {
+                console.log('搜索备件，关键词:', partSearch.keyword, '状态:', partSearch.status);
+                // 实际应该调用搜索API，这里暂时使用前端过滤模拟
+                await refreshParts();
+                
+                if (partSearch.keyword || partSearch.status) {
+                    const keyword = partSearch.keyword.toLowerCase();
+                    parts.value = parts.value.filter(part => {
+                        const matchKeyword = !keyword || 
+                            part.partCode.toLowerCase().includes(keyword) || 
+                            part.partName.toLowerCase().includes(keyword);
+                            
+                        const matchStatus = !partSearch.status || part.status === partSearch.status;
+                        
+                        return matchKeyword && matchStatus;
+                    });
+                }
+            } catch (error) {
+                console.error('搜索备件失败:', error);
+                parts.value = [];
+            } finally {
+                partLoading.value = false;
+            }
+        };
+
+        // 清空备件搜索条件
+        const clearPartSearch = () => {
+            partSearch.keyword = '';
+            partSearch.status = '';
+            refreshParts();
+        };
+
+        // 显示创建备件对话框
+        const showCreatePartDialog = () => {
+            partDialog.isEdit = false;
+            Object.assign(partDialog.form, {
+                id: null,
+                partCode: '',
+                partName: '',
+                creator: currentUser,
+                remark: ''
+            });
+            partDialog.visible = true;
+            
+            // 重置表单验证状态
+            if (partFormRef.value) {
+                partFormRef.value.clearValidate();
+            }
+        };
+
+        // 编辑备件
+        const editPart = (part) => {
+            partDialog.isEdit = true;
+            Object.assign(partDialog.form, {
+                id: part.id,
+                partCode: part.partCode,
+                partName: part.partName,
+                remark: part.remark
+            });
+            partDialog.visible = true;
+            
+            // 重置表单验证状态
+            if (partFormRef.value) {
+                partFormRef.value.clearValidate();
+            }
+        };
+
+        // 提交备件表单
+        const submitPart = async () => {
+            // 表单验证
+            if (!partFormRef.value) {
+                console.error('备件表单引用未找到');
+                return;
+            }
+            
+            try {
+                await partFormRef.value.validate();
+            } catch (error) {
+                console.log('备件表单验证失败:', error);
+                return;
+            }
+            
+            partDialog.loading = true;
+            
+            try {
+                if (partDialog.isEdit) {
+                    // 更新备件
+                    console.log('更新备件:', partDialog.form);
+                    await request('/api/v1/part/update_part', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            id: partDialog.form.id,
+                            partName: partDialog.form.partName,
+                            remark: partDialog.form.remark
+                        })
+                    });
+                    ElMessage.success('备件更新成功');
+                } else {
+                    // 创建备件
+                    console.log('创建备件:', partDialog.form);
+                    await request('/api/v1/part/create_part', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            partCode: partDialog.form.partCode,
+                            partName: partDialog.form.partName,
+                            creator: partDialog.form.creator,
+                            remark: partDialog.form.remark
+                        })
+                    });
+                    ElMessage.success('备件创建成功');
+                }
+                
+                // 关闭对话框
+                partDialog.visible = false;
+                
+                // 刷新备件列表
+                await refreshParts();
+            } catch (error) {
+                console.error('提交备件失败:', error);
+                ElMessage.error('操作失败: ' + (error.message || '未知错误'));
+            } finally {
+                partDialog.loading = false;
+            }
+        };
+
+        // 查看备件详情
+const viewPartDetail = async (part) => {
+    try {
+        console.log('查看备件详情:', part.id);
+        const response = await request(`/api/v1/part/get_part_detail?partId=${part.id}`);
+        console.log('获取到的备件详情数据:', response);
+        
+        // 确保数据格式正确，处理API返回的数据结构
+        let data = response.data || response;
+        
+        // 打印完整的数据结构，帮助调试
+        console.log('完整的数据结构:', JSON.stringify(data));
+        
+        // 新的PartDetailVO结构包含partVO和workHourTreeVOList
+        if (data && data.partVO) {
+            // 设置备件详情数据
+            partDetailDialog.data = data.partVO;
+            
+            // 设置工时树数据
+            partDetailDialog.workHourTree = data.workHourTreeVOList || [];
+            console.log('工时树数据:', partDetailDialog.workHourTree);
+            
+            // 处理工时树数据 - 直接使用WorkHourTreeVO结构
+            if (partDetailDialog.workHourTree && partDetailDialog.workHourTree.length > 0) {
+                console.log('原始工时树数据:', JSON.stringify(partDetailDialog.workHourTree));
+                
+                // 遍历每个工时树节点，确保数据结构完整
+                partDetailDialog.workHourTree.forEach((item, index) => {
+                    console.log(`工时树节点 ${index + 1}:`, item);
+                    
+                    // 确保workHourVO存在
+                    if (!item.workHourVO) {
+                        console.warn(`工时树节点 ${index + 1} 缺少workHourVO属性`);
+                        item.workHourVO = {
+                            id: item.id || 0,
+                            code: item.code || 'UNKNOWN',
+                            description: item.description || '未知工时',
+                            standardHours: item.standardHours || 0,
+                            type: item.type || 'UNKNOWN',
+                            typeDescription: item.typeDescription || '未知类型'
+                        };
+                    } else {
+                        console.log(`工时节点 ${index + 1} 的workHourVO:`, item.workHourVO);
+                    }
+                    
+                    // 确保children是数组
+                    if (item.children) {
+                        if (!Array.isArray(item.children)) {
+                            console.warn(`工时树节点 ${index + 1} 的children不是数组，进行转换`);
+                            item.children = [item.children];
+                        }
+                        console.log(`工时节点 ${index + 1} 有 ${item.children.length} 个子工时`);
+                        item.children.forEach((child, childIndex) => {
+                            console.log(`子工时 ${childIndex + 1}:`, child);
+                        });
+                    } else {
+                        console.log(`工时节点 ${index + 1} 没有子工时`);
+                        item.children = [];
+                    }
+                });
+                
+                console.log('处理后的工时树数据:', partDetailDialog.workHourTree);
+            }
+        } else {
+            // 如果数据不是预期的格式，尝试使用当前行数据填充
+            console.warn('API返回的数据格式不正确，使用当前行数据');
+            partDetailDialog.data = { ...part };
+            partDetailDialog.workHourTree = [];
+        }
+        
+        partDetailDialog.visible = true;
+    } catch (error) {
+        console.error('获取备件详情失败:', error);
+        ElMessage.error('获取详情失败: ' + (error.message || '未知错误'));
+    }
+};
+
+        // 切换备件状态（启用/禁用）
+        const togglePartStatus = async (part) => {
+            try {
+                const action = part.status === 'ENABLED' ? '禁用' : '启用';
+                const apiPath = part.status === 'ENABLED' ? '/api/v1/part/disable_part' : '/api/v1/part/enable_part';
+                
+                await ElMessageBox.confirm(
+                    `确定要${action}备件"${part.partName}"吗？`,
+                    `${action}确认`,
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                console.log(`${action}备件:`, part.id);
+                await request(apiPath, {
+                    method: 'POST',
+                    body: JSON.stringify({ partId: part.id })
+                });
+                
+                ElMessage.success(`${action}成功`);
+                await refreshParts();
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('切换备件状态失败:', error);
+                    ElMessage.error('操作失败: ' + (error.message || '未知错误'));
+                }
+            }
+        };
+
+        // 删除备件
+        const deletePart = async (part) => {
+            try {
+                await ElMessageBox.confirm(
+                    `确定要删除备件"${part.partName}"吗？此操作不可恢复！`,
+                    '删除确认',
+                    {
+                        confirmButtonText: '确定删除',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                console.log('删除备件:', part.id);
+                await request('/api/v1/part/delete_part', {
+                    method: 'POST',
+                    body: JSON.stringify({ partId: part.id })
+                });
+                
+                ElMessage.success('删除成功');
+                await refreshParts();
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('删除备件失败:', error);
+                    ElMessage.error('删除失败: ' + (error.message || '未知错误'));
+                }
+            }
+        };
+
+        // 显示批量绑定工时对话框
+        const showBatchBindHoursDialog = () => {
+            batchBindDialog.form = {
+                file: null,
+                creator: currentUser
+            };
+            batchBindDialog.visible = true;
+            
+            // 重置表单验证状态
+            if (batchBindFormRef.value) {
+                batchBindFormRef.value.clearValidate();
+            }
+        };
+
+        // 处理批量绑定文件变化
+        const handleBatchBindFileChange = (file) => {
+            batchBindDialog.form.file = file.raw;
+        };
+
+        // 提交批量绑定
+        const submitBatchBind = async () => {
+            // 表单验证
+            if (!batchBindFormRef.value) {
+                console.error('批量绑定表单引用未找到');
+                return;
+            }
+            
+            try {
+                await batchBindFormRef.value.validate();
+            } catch (error) {
+                console.log('批量绑定表单验证失败:', error);
+                return;
+            }
+            
+            if (!batchBindDialog.form.file) {
+                ElMessage.error('请选择Excel文件');
+                return;
+            }
+            
+            batchBindDialog.loading = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', batchBindDialog.form.file);
+                formData.append('creator', batchBindDialog.form.creator);
+                
+                const results = await request('/api/v1/part/batch_bind_hours', {
+                    method: 'POST',
+                    body: formData,
+                    isFormData: true
+                });
+                
+                // 计算成功和失败数量
+                const successCount = results.filter(r => r.success).length;
+                const failCount = results.length - successCount;
+                
+                // 显示结果对话框
+                batchBindResultDialog.results = results;
+                batchBindResultDialog.successCount = successCount;
+                batchBindResultDialog.failCount = failCount;
+                batchBindResultDialog.visible = true;
+                
+                // 关闭上传对话框
+                batchBindDialog.visible = false;
+            } catch (error) {
+                console.error('批量绑定失败:', error);
+                ElMessage.error('操作失败: ' + (error.message || '未知错误'));
+            } finally {
+                batchBindDialog.loading = false;
+            }
+        };
+
+        // 下载工时模板
+        const downloadPartHourTemplate = async () => {
+            try {
+                console.log('下载备件工时关联模板');
+                
+                // 使用fetch API获取文件并创建下载链接
+                // 使用已定义的API_BASE作为基础URL
+                const response = await fetch(`${API_BASE}/api/v1/part/download_template`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/octet-stream'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+                }
+                
+                // 获取文件名
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = '备件工时关联模板.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = decodeURIComponent(filenameMatch[1]);
+                    }
+                }
+                
+                // 创建Blob并下载
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                console.log('模板下载成功');
+                ElMessage.success('模板下载成功');
+            } catch (error) {
+                console.error('下载模板失败:', error);
+                ElMessage.error('下载失败: ' + (error.message || '未知错误'));
+            }
+        };
+
+        // 显示上传模板对话框
+        const showUploadTemplateDialog = () => {
+            uploadTemplateDialog.form = {
+                file: null
+            };
+            uploadTemplateDialog.visible = true;
+        };
+
+        // 处理模板文件变化
+        const handleTemplateFileChange = (file) => {
+            uploadTemplateDialog.form.file = file.raw;
+        };
+
+        // 提交上传模板
+        const submitUploadTemplate = async () => {
+            if (!uploadTemplateDialog.form.file) {
+                ElMessage.error('请选择模板文件');
+                return;
+            }
+            
+            uploadTemplateDialog.loading = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', uploadTemplateDialog.form.file);
+                
+                await request('/api/v1/part/upload_template', {
+                    method: 'POST',
+                    body: formData,
+                    isFormData: true
+                });
+                
+                uploadTemplateDialog.visible = false;
+                ElMessage.success('模板上传成功');
+            } catch (error) {
+                console.error('上传模板失败:', error);
+                ElMessage.error('上传失败: ' + (error.message || '未知错误'));
+            } finally {
+                uploadTemplateDialog.loading = false;
+            }
+        };
+
+        // 解绑工时
+        const unbindHour = async (partId, hourId) => {
+            try {
+                await ElMessageBox.confirm(
+                    '确定要解绑此工时吗？',
+                    '解绑确认',
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                console.log('解绑工时:', partId, hourId);
+                await request('/api/v1/part/unbind_hour', {
+                    method: 'POST',
+                    body: JSON.stringify({ partId, hourId })
+                });
+                
+                ElMessage.success('解绑成功');
+                
+                // 更新详情对话框中的工时列表
+                if (partDetailDialog.visible && partDetailDialog.data && partDetailDialog.data.id === partId) {
+                    partDetailDialog.hours = partDetailDialog.hours.filter(h => h.id !== hourId);
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('解绑工时失败:', error);
+                    ElMessage.error('解绑失败: ' + (error.message || '未知错误'));
+                }
+            }
+        };
+
+        // ==================== 工时管理 ====================
+        // 工时搜索条件
+        const workHourSearch = reactive({
+            keyword: '',
+            type: '',
+            status: ''
+        });
+
+        // 工时列表数据
+        const workHours = ref([]);
+        const workHourLoading = ref(false);
+        const expandedWorkHours = ref([]); // 当前展开的行IDs，空数组表示没有行被展开
+        const subWorkHours = reactive({}); // 子工时数据，以父工时ID为键
+        const subWorkHourLoading = reactive({}); // 子工时加载状态，以父工时ID为键
+
+        // 创建/编辑主工时对话框
+        const mainWorkHourDialog = reactive({
+            visible: false,
+            isEdit: false,
+            loading: false,
+            form: {
+                code: '',
+                description: '',
+                standardHours: 1,
+                type: 'MAIN',
+                creator: ''
+            },
+            rules: {
+                code: [
+                    { required: true, message: '请输入工时编码', trigger: 'blur' }
+                ],
+                description: [
+                    { required: true, message: '请输入工时描述', trigger: 'blur' }
+                ],
+                standardHours: [
+                    { required: true, message: '请输入标准工时', trigger: 'blur' }
+                ],
+                type: [
+                    { required: true, message: '请选择工时类型', trigger: 'change' }
+                ],
+                creator: [
+                    { required: true, message: '请输入创建人', trigger: 'blur' }
+                ]
+            }
+        });
+
+        // 创建/编辑子工时对话框
+        const subWorkHourDialog = reactive({
+            visible: false,
+            isEdit: false,
+            loading: false,
+            parentId: null,
+            parentWorkHourName: '',
+            form: {
+                parentId: null,
+                code: '',
+                description: '',
+                standardHours: 1,
+                type: 'SUB',
+                stepOrder: 1,
+                creator: ''
+            },
+            rules: {
+                code: [
+                    { required: true, message: '请输入工时编码', trigger: 'blur' }
+                ],
+                description: [
+                    { required: true, message: '请输入工时描述', trigger: 'blur' }
+                ],
+                standardHours: [
+                    { required: true, message: '请输入标准工时', trigger: 'blur' }
+                ],
+                type: [
+                    { required: true, message: '请选择工时类型', trigger: 'change' }
+                ],
+                stepOrder: [
+                    { required: true, message: '请输入步骤顺序', trigger: 'blur' }
+                ],
+                creator: [
+                    { required: true, message: '请输入创建人', trigger: 'blur' }
+                ]
+            }
+        });
+
+        // 工时详情对话框
+        const workHourDetailDialog = reactive({
+            visible: false,
+            data: null,
+            children: []
+        });
+
+        // 批量上传子工时对话框
+        const batchUploadSubDialog = reactive({
+            visible: false,
+            loading: false,
+            parentId: null,
+            parentWorkHourName: '',
+            form: {
+                parentId: null,
+                file: null,
+                creator: ''
+            },
+            rules: {
+                file: [
+                    { required: true, message: '请选择Excel文件', trigger: 'change' }
+                ],
+                creator: [
+                    { required: true, message: '请输入创建人', trigger: 'blur' }
+                ]
+            }
+        });
+
+        // 批量上传结果对话框
+        const batchUploadResultDialog = reactive({
+            visible: false,
+            results: [],
+            successCount: 0,
+            failCount: 0
+        });
+
+        // 上传工时模板对话框
+        const uploadWorkHourTemplateDialog = reactive({
+            visible: false,
+            loading: false,
+            form: {
+                file: null
+            }
+        });
+
+        // 刷新工时列表
+        const refreshWorkHours = async () => {
+            try {
+                workHourLoading.value = true;
+                // 重置展开状态
+                expandedWorkHours.value = [];
+                const response = await request('/api/v1/workhour/query_main');
+                workHours.value = response || [];
+                console.log('获取工时列表成功，数量:', workHours.value.length);
+            } catch (error) {
+                console.error('获取工时列表失败:', error);
+                ElMessage.error('获取工时列表失败: ' + (error.message || '未知错误'));
+                workHours.value = [];
+            } finally {
+                workHourLoading.value = false;
+            }
+        };
+
+        // 搜索工时
+        const searchWorkHours = () => {
+            console.log('搜索工时:', workHourSearch);
+            refreshWorkHours();
+            // TODO: 实现工时搜索功能
+        };
+
+        // 清空工时搜索条件
+        const clearWorkHourSearch = () => {
+            workHourSearch.keyword = '';
+            workHourSearch.type = '';
+            workHourSearch.status = '';
+            refreshWorkHours();
+        };
+
+        // 处理工时展开事件
+        const handleWorkHourExpand = async (row, expanded) => {
+            console.log('展开/收起事件:', row.id, expanded);
+            
+            // 始终重置expandedWorkHours数组
+            if (expanded) {
+                // 如果是展开，则设置为当前行ID
+                expandedWorkHours.value = [row.id];
+                // 加载子工时数据
+                await loadSubWorkHours(row.id);
+            } else {
+                // 如果是收起，则清空数组
+                expandedWorkHours.value = [];
+            }
+            
+            console.log('当前展开的行:', expandedWorkHours.value);
+        };
+
+        // 加载子工时
+        const loadSubWorkHours = async (parentId, forceRefresh = false) => {
+            try {
+                // 如果已经有数据且不强制刷新，则直接返回
+                if (!forceRefresh && subWorkHours[parentId] && subWorkHours[parentId].length > 0) {
+                    console.log(`使用缓存的子工时数据，父工时ID: ${parentId}`);
+                    return;
+                }
+                
+                subWorkHourLoading[parentId] = true;
+                const response = await request(`/api/v1/workhour/query_sub?parentId=${parentId}`);
+                subWorkHours[parentId] = response || [];
+                console.log(`获取子工时成功，父工时ID: ${parentId}, 数量:`, subWorkHours[parentId].length);
+            } catch (error) {
+                console.error(`获取子工时失败，父工时ID: ${parentId}:`, error);
+                ElMessage.error('获取子工时失败: ' + (error.message || '未知错误'));
+                subWorkHours[parentId] = [];
+            } finally {
+                subWorkHourLoading[parentId] = false;
+            }
+        };
+
+        // 显示创建主工时对话框
+        const showCreateMainWorkHourDialog = () => {
+            mainWorkHourDialog.isEdit = false;
+            mainWorkHourDialog.form = {
+                code: '',
+                description: '',
+                standardHours: 1,
+                type: 'MAIN',
+                creator: currentUser.value
+            };
+            mainWorkHourDialog.visible = true;
+        };
+
+        // 显示创建子工时对话框
+        const showCreateSubWorkHourDialog = (parentWorkHour) => {
+            subWorkHourDialog.isEdit = false;
+            subWorkHourDialog.parentId = parentWorkHour.id;
+            subWorkHourDialog.parentWorkHourName = `${parentWorkHour.code} - ${parentWorkHour.description}`;
+            subWorkHourDialog.form = {
+                parentId: parentWorkHour.id,
+                code: '',
+                description: '',
+                standardHours: 1,
+                type: 'SUB',
+                stepOrder: 1,
+                creator: currentUser.value
+            };
+            subWorkHourDialog.visible = true;
+        };
+
+        // 提交主工时
+        const submitMainWorkHour = async () => {
+            try {
+                mainWorkHourDialog.loading = true;
+                
+                if (mainWorkHourDialog.isEdit) {
+                    // 更新主工时
+                    const requestData = {
+                        workHourId: mainWorkHourDialog.form.id,
+                        description: mainWorkHourDialog.form.description,
+                        standardHours: mainWorkHourDialog.form.standardHours,
+                        stepOrder: null
+                    };
+                    
+                    await request('/api/v1/workhour/update', {
+                        method: 'POST',
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    ElMessage.success('更新工时成功');
+                } else {
+                    // 创建主工时
+                    await request('/api/v1/workhour/create_main', {
+                        method: 'POST',
+                        body: JSON.stringify(mainWorkHourDialog.form)
+                    });
+                    
+                    ElMessage.success('创建工时成功');
+                }
+                
+                mainWorkHourDialog.visible = false;
+                refreshWorkHours();
+            } catch (error) {
+                console.error('提交工时失败:', error);
+                ElMessage.error('提交失败: ' + (error.message || '未知错误'));
+            } finally {
+                mainWorkHourDialog.loading = false;
+            }
+        };
+
+        // 提交子工时
+        const submitSubWorkHour = async () => {
+            try {
+                subWorkHourDialog.loading = true;
+                
+                if (subWorkHourDialog.isEdit) {
+                    // 更新子工时
+                    const requestData = {
+                        workHourId: subWorkHourDialog.form.id,
+                        description: subWorkHourDialog.form.description,
+                        standardHours: subWorkHourDialog.form.standardHours,
+                        stepOrder: subWorkHourDialog.form.stepOrder
+                    };
+                    
+                    await request('/api/v1/workhour/update', {
+                        method: 'POST',
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    ElMessage.success('更新工时成功');
+                } else {
+                    // 创建子工时
+                    await request('/api/v1/workhour/create_sub', {
+                        method: 'POST',
+                        body: JSON.stringify(subWorkHourDialog.form)
+                    });
+                    
+                    ElMessage.success('创建工时成功');
+                }
+                
+                subWorkHourDialog.visible = false;
+                await loadSubWorkHours(subWorkHourDialog.parentId);
+            } catch (error) {
+                console.error('提交工时失败:', error);
+                ElMessage.error('提交失败: ' + (error.message || '未知错误'));
+            } finally {
+                subWorkHourDialog.loading = false;
+            }
+        };
+
+        // 编辑工时
+        const editWorkHour = (workHour) => {
+            if (workHour.isMainWorkHour) {
+                // 编辑主工时
+                mainWorkHourDialog.isEdit = true;
+                mainWorkHourDialog.form = {
+                    id: workHour.id,
+                    code: workHour.code,
+                    description: workHour.description,
+                    standardHours: workHour.standardHours,
+                    type: workHour.type
+                };
+                mainWorkHourDialog.visible = true;
+            } else {
+                // 编辑子工时
+                subWorkHourDialog.isEdit = true;
+                subWorkHourDialog.parentId = workHour.parentId;
+                subWorkHourDialog.form = {
+                    id: workHour.id,
+                    parentId: workHour.parentId,
+                    code: workHour.code,
+                    description: workHour.description,
+                    standardHours: workHour.standardHours,
+                    type: workHour.type,
+                    stepOrder: workHour.stepOrder
+                };
+                subWorkHourDialog.visible = true;
+            }
+        };
+
+        // 查看工时详情
+        const viewWorkHourDetail = async (workHour) => {
+            try {
+                console.log('查看工时详情:', workHour.id);
+                const response = await request(`/api/v1/workhour/detail?workHourId=${workHour.id}`);
+                
+                workHourDetailDialog.data = response;
+                workHourDetailDialog.children = [];
+                
+                if (workHour.isMainWorkHour) {
+                    // 加载子工时
+                    try {
+                        const subResponse = await request(`/api/v1/workhour/query_sub?parentId=${workHour.id}`);
+                        workHourDetailDialog.children = subResponse || [];
+                    } catch (error) {
+                        console.error('获取子工时失败:', error);
+                        workHourDetailDialog.children = [];
+                    }
+                }
+                
+                workHourDetailDialog.visible = true;
+            } catch (error) {
+                console.error('获取工时详情失败:', error);
+                ElMessage.error('获取详情失败: ' + (error.message || '未知错误'));
+            }
+        };
+
+        // 切换工时状态
+        const toggleWorkHourStatus = async (workHour) => {
+            try {
+                const action = workHour.status === 'ENABLED' ? '禁用' : '启用';
+                await ElMessageBox.confirm(
+                    `确定要${action}该工时吗？`,
+                    `${action}确认`,
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                const url = workHour.status === 'ENABLED' ? 
+                    `/api/v1/workhour/disable?workHourId=${workHour.id}` : 
+                    `/api/v1/workhour/enable?workHourId=${workHour.id}`;
+                
+                await request(url, { method: 'POST' });
+                
+                // 立即更新本地状态
+                workHour.status = workHour.status === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+                
+                ElMessage.success(`${action}成功`);
+                
+                // 刷新数据，确保状态同步
+                if (workHour.isMainWorkHour) {
+                    // 如果是主工时，刷新整个列表
+                    await refreshWorkHours();
+                } else if (workHour.parentId) {
+                    // 如果是子工时，刷新子工时列表
+                    // 清除缓存，强制重新加载
+                    delete subWorkHours[workHour.parentId];
+                    await loadSubWorkHours(workHour.parentId);
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('切换工时状态失败:', error);
+                    ElMessage.error('操作失败: ' + (error.message || '未知错误'));
+                }
+            }
+        };
+
+        // 删除工时
+        const deleteWorkHour = async (workHour) => {
+            try {
+                await ElMessageBox.confirm(
+                    '确定要删除该工时吗？',
+                    '删除确认',
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                await request(`/api/v1/workhour/delete?workHourId=${workHour.id}`, { method: 'POST' });
+                
+                ElMessage.success('删除成功');
+                
+                // 刷新数据，确保状态同步
+                if (workHour.isMainWorkHour) {
+                    // 如果是主工时，刷新整个列表
+                    await refreshWorkHours();
+                } else if (workHour.parentId) {
+                    // 如果是子工时，刷新子工时列表
+                    // 清除缓存，强制重新加载
+                    delete subWorkHours[workHour.parentId];
+                    await loadSubWorkHours(workHour.parentId);
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('删除工时失败:', error);
+                    ElMessage.error('删除失败: ' + (error.message || '未知错误'));
+                }
+            }
+        };
+
+        // 显示批量上传子工时对话框
+        const showBatchUploadSubWorkHoursDialog = (parentWorkHour) => {
+            batchUploadSubDialog.parentId = parentWorkHour.id;
+            batchUploadSubDialog.parentWorkHourName = `${parentWorkHour.code} - ${parentWorkHour.description}`;
+            batchUploadSubDialog.form = {
+                parentId: parentWorkHour.id,
+                file: null,
+                creator: currentUser.value
+            };
+            batchUploadSubDialog.visible = true;
+        };
+
+        // 处理批量上传文件变化
+        const handleBatchUploadFileChange = (file) => {
+            batchUploadSubDialog.form.file = file.raw;
+        };
+
+        // 提交批量上传子工时
+        const submitBatchUploadSub = async () => {
+            if (!batchUploadSubDialog.form.file) {
+                ElMessage.error('请选择Excel文件');
+                return;
+            }
+            
+            if (!batchUploadSubDialog.form.creator) {
+                ElMessage.error('请输入创建人');
+                return;
+            }
+            
+            batchUploadSubDialog.loading = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', batchUploadSubDialog.form.file);
+                formData.append('parentId', batchUploadSubDialog.form.parentId);
+                formData.append('creator', batchUploadSubDialog.form.creator);
+                
+                const response = await request('/api/v1/workhour/batch_upload_sub', {
+                    method: 'POST',
+                    body: formData,
+                    isFormData: true
+                });
+                
+                // 处理结果
+                const results = response || [];
+                const successCount = results.filter(item => item.success).length;
+                const failCount = results.length - successCount;
+                
+                batchUploadResultDialog.results = results;
+                batchUploadResultDialog.successCount = successCount;
+                batchUploadResultDialog.failCount = failCount;
+                batchUploadResultDialog.visible = true;
+                
+                batchUploadSubDialog.visible = false;
+                
+                // 刷新子工时列表
+                if (successCount > 0) {
+                    await loadSubWorkHours(batchUploadSubDialog.form.parentId);
+                }
+            } catch (error) {
+                console.error('批量上传子工时失败:', error);
+                ElMessage.error('上传失败: ' + (error.message || '未知错误'));
+            } finally {
+                batchUploadSubDialog.loading = false;
+            }
+        };
+
+        // 下载工时模板
+        const downloadWorkHourTemplate = async () => {
+            try {
+                console.log('下载工时批量上传模板');
+                
+                // 使用fetch API获取文件并创建下载链接
+                const response = await fetch(`${API_BASE}/api/v1/workhour/download_template`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/octet-stream'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+                }
+                
+                // 获取文件名
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = '工时批量上传模板.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = decodeURIComponent(filenameMatch[1]);
+                    }
+                }
+                
+                // 创建Blob并下载
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                console.log('模板下载成功');
+                ElMessage.success('模板下载成功');
+            } catch (error) {
+                console.error('下载模板失败:', error);
+                ElMessage.error('下载失败: ' + (error.message || '未知错误'));
+            }
+        };
+
+        // 显示上传工时模板对话框
+        const showUploadWorkHourTemplateDialog = () => {
+            uploadWorkHourTemplateDialog.form = {
+                file: null
+            };
+            uploadWorkHourTemplateDialog.visible = true;
+        };
+
+        // 处理工时模板文件变化
+        const handleWorkHourTemplateFileChange = (file) => {
+            uploadWorkHourTemplateDialog.form.file = file.raw;
+        };
+
+        // 提交上传工时模板
+        const submitUploadWorkHourTemplate = async () => {
+            if (!uploadWorkHourTemplateDialog.form.file) {
+                ElMessage.error('请选择模板文件');
+                return;
+            }
+            
+            uploadWorkHourTemplateDialog.loading = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', uploadWorkHourTemplateDialog.form.file);
+                
+                await request('/api/v1/workhour/upload_template', {
+                    method: 'POST',
+                    body: formData,
+                    isFormData: true
+                });
+                
+                uploadWorkHourTemplateDialog.visible = false;
+                ElMessage.success('模板上传成功');
+            } catch (error) {
+                console.error('上传模板失败:', error);
+                ElMessage.error('上传失败: ' + (error.message || '未知错误'));
+            } finally {
+                uploadWorkHourTemplateDialog.loading = false;
+            }
+        };
+
         return {
             // 响应式数据
             activeMenu,
@@ -2991,7 +4156,71 @@ const app = createApp({
 
             // 树组件引用
             templateTreeRef,
-            instanceTreeRef
+            instanceTreeRef,
+
+            // 备件管理相关数据和方法
+            partSearch,
+            parts,
+            partLoading,
+            partDialog,
+            partDetailDialog,
+            batchBindDialog,
+            batchBindResultDialog,
+            partFormRef,
+            batchBindFormRef,
+            uploadTemplateDialog,
+            uploadTemplateFormRef,
+            refreshParts,
+            searchParts,
+            clearPartSearch,
+            showCreatePartDialog,
+            editPart,
+            submitPart,
+            viewPartDetail,
+            togglePartStatus,
+            deletePart,
+            showBatchBindHoursDialog,
+            handleBatchBindFileChange,
+            submitBatchBind,
+            downloadPartHourTemplate,
+            showUploadTemplateDialog,
+            handleTemplateFileChange,
+            submitUploadTemplate,
+            unbindHour,
+
+            // 工时管理相关数据和方法
+            workHourSearch,
+            workHours,
+            workHourLoading,
+            expandedWorkHours,
+            subWorkHours,
+            subWorkHourLoading,
+            mainWorkHourDialog,
+            subWorkHourDialog,
+            workHourDetailDialog,
+            batchUploadSubDialog,
+            batchUploadResultDialog,
+            uploadWorkHourTemplateDialog,
+            refreshWorkHours,
+            searchWorkHours,
+            clearWorkHourSearch,
+            handleWorkHourExpand,
+            loadSubWorkHours,
+            showCreateMainWorkHourDialog,
+            showCreateSubWorkHourDialog,
+            submitMainWorkHour,
+            submitSubWorkHour,
+            editWorkHour,
+            viewWorkHourDetail,
+            toggleWorkHourStatus,
+            deleteWorkHour,
+            showBatchUploadSubWorkHoursDialog,
+            handleBatchUploadFileChange,
+            submitBatchUploadSub,
+            downloadWorkHourTemplate,
+            showUploadWorkHourTemplateDialog,
+            handleWorkHourTemplateFileChange,
+            submitUploadWorkHourTemplate
         };
     }
 });

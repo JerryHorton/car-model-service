@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IPartDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="PartResultMap" type="cn.cug.sxy.infrastructure.dao.po.PartPO">
+        <id column="id" property="id"/>
+        <result column="part_code" property="partCode"/>
+        <result column="part_name" property="partName"/>
+        <result column="status" property="status"/>
+        <result column="creator" property="creator"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, part_code, part_name, status, creator, remark, created_time, updated_time
+    </sql>
+
+    <!-- 插入备件记录 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.PartPO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO part (part_code, part_name, status, creator, remark)
+        VALUES (#{partCode}, #{partName}, #{status}, #{creator}, #{remark})
+    </insert>
+
+    <!-- 更新备件记录 -->
+    <update id="update" parameterType="cn.cug.sxy.infrastructure.dao.po.PartPO">
+        UPDATE part
+        SET part_name    = #{partName},
+            status       = #{status},
+            creator      = #{creator},
+            remark       = #{remark},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除备件记录 -->
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE
+        FROM part
+        WHERE id = #{partId}
+    </delete>
+
+    <!-- 根据ID查询备件记录 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="PartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM part
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据编码查询备件记录 -->
+    <select id="selectByCode" parameterType="java.lang.String" resultMap="PartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM part
+        WHERE part_code = #{partCode}
+    </select>
+
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="PartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM part
+        WHERE status = #{status}
+    </select>
+
+    <!-- 查询所有备件记录 -->
+    <select id="selectAll" resultMap="PartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM part
+        ORDER BY id DESC
+    </select>
+
+    <!-- 检查编码是否存在 -->
+    <select id="existsByCode" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM part
+        WHERE part_code = #{partCode}
+    </select>
+
+</mapper>

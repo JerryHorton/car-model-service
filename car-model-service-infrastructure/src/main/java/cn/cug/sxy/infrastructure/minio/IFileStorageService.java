@@ -41,7 +41,7 @@ public interface IFileStorageService {
      * @param file Excel模板文件
      * @return 上传结果信息
      */
-    String uploadTemplate(MultipartFile file);
+    String uploadTemplate(MultipartFile file, String templateFileType);
 
     /**
      * 删除文件
@@ -91,23 +91,26 @@ public interface IFileStorageService {
     /**
      * 获取工时模板信息
      *
+     * @param templateFileType 模板文件类型
      * @return 模板信息
      */
-    String getTemplateInfo();
+    String getTemplateFileInfo(String templateFileType);
 
     /**
      * 检查工时模板文件是否存在
      *
+     * @param templateFileType 模板文件类型
      * @return 是否存在
      */
-    boolean isTemplateExists();
+    boolean isTemplateExists(String templateFileType);
 
     /**
-     * 获取工时模板文件
+     * 获取模板文件
      *
+     * @param templateFileType 模板文件类型
      * @return 模板文件字节数组
      * @throws IOException 读取异常
      */
-    byte[] getWorkHourTemplate() throws IOException;
+    byte[] getTemplateFile(String templateFileType) throws IOException;
 
 }

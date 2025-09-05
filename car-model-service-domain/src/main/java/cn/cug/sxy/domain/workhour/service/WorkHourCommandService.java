@@ -9,6 +9,7 @@ import cn.cug.sxy.domain.workhour.model.valobj.WorkHourId;
 import cn.cug.sxy.domain.workhour.model.valobj.WorkHourType;
 import cn.cug.sxy.types.enums.ResponseCode;
 import cn.cug.sxy.types.exception.AppException;
+import cn.cug.sxy.types.utils.TemplateFileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -144,7 +145,6 @@ public class WorkHourCommandService implements IWorkHourCommandService {
         if (!workHourOpt.isPresent()) {
             throw new AppException(ResponseCode.WORK_HOUR_NOT_FOUND_ERROR);
         }
-
         WorkHourEntity workHourEntity = workHourOpt.get();
         // 如果是主工时，检查是否有子工时
         if (workHourEntity.isMainWorkHour()) {
@@ -238,66 +238,12 @@ public class WorkHourCommandService implements IWorkHourCommandService {
 
     @Override
     public String uploadTemplate(MultipartFile file) {
-        try {
-            log.info("上传工时批量上传模板 fileName={}, fileSize={}",
-                    file.getOriginalFilename(), file.getSize());
-            // 验证文件
-            if (file.isEmpty()) {
-                throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "上传文件不能为空");
-            }
-            // 验证文件类型
-            String fileName = file.getOriginalFilename();
-            if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
-                throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "只支持Excel文件格式(.xlsx/.xls)");
-            }
-            // 验证文件大小（限制为2MB）
-            if (file.getSize() > 2 * 1024 * 1024) {
-                throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "模板文件大小不能超过2MB");
-            }
-            // 调用MinIO服务上传模板
-            String result = workHourRepository.uploadTemplate(file);
-            log.info("工时批量上传模板上传成功");
-
-            return result;
-        } catch (AppException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("上传工时批量上传模板异常", e);
-            throw new AppException(ResponseCode.UN_ERROR.getCode(), "上传模板失败: " + e.getMessage());
-        }
+        return workHourRepository.uploadTemplate(file);
     }
 
     @Override
     public String getTemplateInfo() {
         return workHourRepository.getTemplateInfo();
-    }
-
-    /**
-     * 验证Excel数据
-     */
-    private void validateWorkHourExcelData(WorkHourExcelData data) {
-        if (StringUtils.isBlank(data.getCode())) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "工时代码不能为空");
-        }
-        if (StringUtils.isBlank(data.getDescription())) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "工时描述不能为空");
-        }
-        if (StringUtils.isBlank(data.getStandardHours())) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "标准工时不能为空");
-        }
-        if (StringUtils.isBlank(data.getStepOrder())) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "步骤顺序不能为空");
-        }
-        try {
-            new BigDecimal(data.getStandardHours());
-        } catch (NumberFormatException e) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "标准工时格式不正确");
-        }
-        try {
-            Integer.parseInt(data.getStepOrder());
-        } catch (NumberFormatException e) {
-            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "步骤顺序格式不正确");
-        }
     }
 
 } 

@@ -4,6 +4,7 @@ import cn.cug.sxy.api.dto.WorkHourCreateRequestDTO;
 import cn.cug.sxy.api.dto.WorkHourUpdateRequestDTO;
 import cn.cug.sxy.api.response.Response;
 import cn.cug.sxy.api.vo.WorkHourBatchUploadResultVO;
+import cn.cug.sxy.api.vo.WorkHourTreeVO;
 import cn.cug.sxy.api.vo.WorkHourVO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,7 +97,7 @@ public interface IWorkHourService {
      * @param workHourId 工时ID
      * @return 工时树结构
      */
-    Response<List<WorkHourVO>> queryWorkHourTree(Long workHourId);
+    Response<WorkHourTreeVO> queryWorkHourTree(Long workHourId);
 
     /**
      * 根据ID查询工时详情

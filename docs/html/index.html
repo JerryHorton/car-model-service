@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>车型配置管理系统</title>
+    <title>车型备件管理系统</title>
     <link href="https://unpkg.com/element-plus@2.4.4/dist/index.css" rel="stylesheet">
     <style>
         body {
@@ -320,7 +320,7 @@
         <div class="header">
             <div class="header-content">
                 <div class="logo">
-                    🚗 车型配置管理系统
+                    🚗 车型备件管理系统
                 </div>
                 <div class="user-info">
                     <el-dropdown>
@@ -366,6 +366,12 @@
                     </el-sub-menu>
                     <el-menu-item index="usage">
                         📋 <span>用法管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="part">
+                        🔧 <span>备件管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="workhour">
+                        ⏱️ <span>工时管理</span>
                     </el-menu-item>
                 </el-menu>
             </div>
@@ -857,6 +863,259 @@
                                             @click="toggleInstanceStatus(scope.row)">
                                             {{ scope.row.status === 'ENABLED' ? '🚫 禁用' : '✅ 启用' }}
                                         </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 备件管理页面 -->
+                <div v-show="activeMenu === 'part'">
+                    <div class="page-header">
+                        <h1 class="page-title">备件管理</h1>
+                        <p class="page-description">管理系统备件信息，支持备件与工时关联</p>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-title">备件列表</div>
+                            <el-button type="primary" @click="showCreatePartDialog">
+                                ➕ 新建备件
+                            </el-button>
+                        </div>
+                        <div class="card-body">
+                            <div class="toolbar">
+                                <div class="search-box">
+                                    <el-input
+                                        v-model="partSearch.keyword"
+                                        placeholder="搜索备件编码/名称"
+                                        @keyup.enter="searchParts"
+                                        clearable
+                                        style="width: 200px;">
+                                        <template #prefix>
+                                            🔍
+                                        </template>
+                                    </el-input>
+                                    <el-select
+                                        v-model="partSearch.status"
+                                        placeholder="状态"
+                                        clearable
+                                        style="width: 120px; margin-left: 10px;">
+                                        <el-option label="启用" value="ENABLED"></el-option>
+                                        <el-option label="禁用" value="DISABLED"></el-option>
+                                    </el-select>
+                                    <el-button @click="searchParts" type="primary" style="margin-left: 10px;">
+                                        🔍 搜索
+                                    </el-button>
+                                    <el-button @click="clearPartSearch" style="margin-left: 10px;">
+                                        🗑️ 清空
+                                    </el-button>
+                                    <el-button @click="refreshParts" style="margin-left: 10px;">
+                                        🔄 刷新
+                                    </el-button>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <el-button type="success" @click="showBatchBindHoursDialog">
+                                        📋 批量绑定工时
+                                    </el-button>
+                                    <el-button type="info" @click="downloadPartHourTemplate">
+                                        📥 下载模板
+                                    </el-button>
+                                    <el-button type="warning" @click="showUploadTemplateDialog">
+                                        📤 上传模板
+                                    </el-button>
+                                </div>
+                            </div>
+                            
+                            <el-table 
+                                :data="parts" 
+                                v-loading="partLoading"
+                                stripe>
+                                <el-table-column type="index" label="序号" width="80" :index="(index) => index + 1"></el-table-column>
+                                <el-table-column prop="partCode" label="备件编码" width="150"></el-table-column>
+                                <el-table-column prop="partName" label="备件名称"></el-table-column>
+                                <el-table-column prop="status" label="状态" width="100">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'danger'">
+                                            {{ scope.row.status === 'ENABLED' ? '启用' : '禁用' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="creator" label="创建人" width="120"></el-table-column>
+                                <el-table-column prop="createdTime" label="创建时间" width="180">
+                                    <template #default="scope">
+                                        {{ formatDateTime(scope.row.createdTime) }}
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="操作" width="300" fixed="right">
+                                    <template #default="scope">
+                                        <el-button size="small" @click="viewPartDetail(scope.row)">详情</el-button>
+                                        <el-button size="small" @click="editPart(scope.row)">编辑</el-button>
+                                        <el-button 
+                                            size="small" 
+                                            :type="scope.row.status === 'ENABLED' ? 'warning' : 'success'"
+                                            @click="togglePartStatus(scope.row)">
+                                            {{ scope.row.status === 'ENABLED' ? '禁用' : '启用' }}
+                                        </el-button>
+                                        <el-button size="small" type="danger" @click="deletePart(scope.row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 工时管理页面 -->
+                <div v-show="activeMenu === 'workhour'">
+                    <div class="page-header">
+                        <h1 class="page-title">工时管理</h1>
+                        <p class="page-description">管理系统工时信息，支持主工时和子工时的层级管理</p>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-title">主工时列表</div>
+                            <div>
+                                <el-button type="primary" @click="showCreateMainWorkHourDialog">
+                                    ➕ 新建主工时
+                                </el-button>
+                                <el-button type="info" @click="downloadWorkHourTemplate">
+                                    📥 下载模板
+                                </el-button>
+                                <el-button type="warning" @click="showUploadWorkHourTemplateDialog">
+                                    📤 上传模板
+                                </el-button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="toolbar">
+                                <div class="search-box">
+                                    <el-input
+                                        v-model="workHourSearch.keyword"
+                                        placeholder="搜索工时编码/描述"
+                                        @keyup.enter="searchWorkHours"
+                                        clearable
+                                        style="width: 200px;">
+                                        <template #prefix>
+                                            🔍
+                                        </template>
+                                    </el-input>
+                                    <el-select
+                                        v-model="workHourSearch.type"
+                                        placeholder="工时类型"
+                                        clearable
+                                        style="width: 120px; margin-left: 10px;">
+                                        <el-option label="主工时" value="MAIN"></el-option>
+                                        <el-option label="子工时" value="SUB"></el-option>
+                                    </el-select>
+                                    <el-select
+                                        v-model="workHourSearch.status"
+                                        placeholder="状态"
+                                        clearable
+                                        style="width: 120px; margin-left: 10px;">
+                                        <el-option label="启用" value="ENABLED"></el-option>
+                                        <el-option label="禁用" value="DISABLED"></el-option>
+                                    </el-select>
+                                    <el-button @click="searchWorkHours" type="primary" style="margin-left: 10px;">
+                                        🔍 搜索
+                                    </el-button>
+                                    <el-button @click="clearWorkHourSearch" style="margin-left: 10px;">
+                                        🗑️ 清空
+                                    </el-button>
+                                    <el-button @click="refreshWorkHours" style="margin-left: 10px;">
+                                        🔄 刷新
+                                    </el-button>
+                                </div>
+                            </div>
+                            
+                            <el-table 
+                                :data="workHours" 
+                                v-loading="workHourLoading"
+                                stripe
+                                row-key="id"
+                                :expand-row-keys="expandedWorkHours"
+                                @expand-change="handleWorkHourExpand">
+                                <el-table-column type="expand">
+                                    <template #default="props">
+                                        <div style="padding: 0 20px;">
+                                            <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                                <h4 style="margin: 0;">子工时列表</h4>
+                                                <el-button type="primary" size="small" @click="showCreateSubWorkHourDialog(props.row)">
+                                                    ➕ 添加子工时
+                                                </el-button>
+                                            </div>
+                                            <el-table 
+                                                :data="subWorkHours[props.row.id] || []" 
+                                                border 
+                                                size="small"
+                                                v-loading="subWorkHourLoading[props.row.id]">
+                                                <el-table-column type="index" label="序号" width="60" :index="(index) => index + 1"></el-table-column>
+                                                <el-table-column prop="code" label="工时编码" width="120"></el-table-column>
+                                                <el-table-column prop="description" label="工时描述"></el-table-column>
+                                                <el-table-column prop="standardHours" label="标准工时" width="100"></el-table-column>
+                                                <el-table-column prop="stepOrder" label="步骤顺序" width="100"></el-table-column>
+                                                <el-table-column prop="status" label="状态" width="80">
+                                                    <template #default="scope">
+                                                        <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'danger'" size="small">
+                                                            {{ scope.row.status === 'ENABLED' ? '启用' : '禁用' }}
+                                                        </el-tag>
+                                                    </template>
+                                                </el-table-column>
+                                                <el-table-column label="操作" width="250">
+                                                    <template #default="scope">
+                                                        <el-button size="small" @click="editWorkHour(scope.row)">编辑</el-button>
+                                                        <el-button 
+                                                            size="small" 
+                                                            :type="scope.row.status === 'ENABLED' ? 'warning' : 'success'"
+                                                            @click="toggleWorkHourStatus(scope.row)">
+                                                            {{ scope.row.status === 'ENABLED' ? '禁用' : '启用' }}
+                                                        </el-button>
+                                                        <el-button size="small" type="danger" @click="deleteWorkHour(scope.row)">删除</el-button>
+                                                    </template>
+                                                </el-table-column>
+                                            </el-table>
+                                            <div v-if="!subWorkHours[props.row.id] || subWorkHours[props.row.id].length === 0" style="text-align: center; padding: 20px; color: #909399;">
+                                                暂无子工时
+                                            </div>
+                                            <div style="margin-top: 10px;">
+                                                <el-button type="success" size="small" @click="showBatchUploadSubWorkHoursDialog(props.row)">
+                                                    📋 批量上传子工时
+                                                </el-button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column type="index" label="序号" width="60" :index="(index) => index + 1"></el-table-column>
+                                <el-table-column prop="code" label="工时编码" width="120"></el-table-column>
+                                <el-table-column prop="description" label="工时描述"></el-table-column>
+                                <el-table-column prop="standardHours" label="标准工时" width="100"></el-table-column>
+                                <el-table-column prop="type" label="类型" width="100">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.type === 'MAIN' ? 'success' : 'info'">
+                                            {{ scope.row.typeDescription }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="status" label="状态" width="80">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'danger'">
+                                            {{ scope.row.status === 'ENABLED' ? '启用' : '禁用' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="creator" label="创建人" width="100"></el-table-column>
+                                <el-table-column label="操作" width="250" fixed="right">
+                                    <template #default="scope">
+                                        <el-button size="small" @click="viewWorkHourDetail(scope.row)">详情</el-button>
+                                        <el-button size="small" @click="editWorkHour(scope.row)">编辑</el-button>
+                                        <el-button 
+                                            size="small" 
+                                            :type="scope.row.status === 'ENABLED' ? 'warning' : 'success'"
+                                            @click="toggleWorkHourStatus(scope.row)">
+                                            {{ scope.row.status === 'ENABLED' ? '禁用' : '启用' }}
+                                        </el-button>
+                                        <el-button size="small" type="danger" @click="deleteWorkHour(scope.row)">删除</el-button>
                                     </template>
                                 </el-table-column>
                             </el-table>
@@ -1919,6 +2178,489 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 创建/编辑备件对话框 -->
+        <el-dialog
+            v-model="partDialog.visible"
+            :title="partDialog.isEdit ? '编辑备件' : '新建备件'"
+            width="500px"
+            :close-on-click-modal="false">
+            <el-form :model="partDialog.form" :rules="partDialog.rules" ref="partFormRef" label-width="100px">
+                <el-form-item label="备件编码" prop="partCode">
+                    <el-input v-model="partDialog.form.partCode" placeholder="请输入备件编码" :disabled="partDialog.isEdit"></el-input>
+                </el-form-item>
+                <el-form-item label="备件名称" prop="partName">
+                    <el-input v-model="partDialog.form.partName" placeholder="请输入备件名称"></el-input>
+                </el-form-item>
+                <el-form-item label="创建人" prop="creator" v-if="!partDialog.isEdit">
+                    <el-input v-model="partDialog.form.creator" placeholder="请输入创建人"></el-input>
+                </el-form-item>
+                <el-form-item label="备注" prop="remark">
+                    <el-input 
+                        v-model="partDialog.form.remark" 
+                        type="textarea" 
+                        :rows="3"
+                        placeholder="请输入备注信息">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="partDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitPart" :loading="partDialog.loading">
+                        {{ partDialog.isEdit ? '更新' : '创建' }}
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+                <!-- 备件详情对话框 -->
+        <el-dialog
+            v-model="partDetailDialog.visible"
+            title="备件详情"
+            width="600px">
+            <div v-if="partDetailDialog.data">
+                <!-- 调试信息，帮助查看数据结构 -->
+                <div style="display: none;">
+                    <strong>备件信息:</strong> {{ JSON.stringify(partDetailDialog.data) }}
+                    <br><br>
+                    <strong>工时树信息:</strong> {{ JSON.stringify(partDetailDialog.workHourTree) }}
+                </div>
+                
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="备件ID">{{ partDetailDialog.data.id }}</el-descriptions-item>
+                    <el-descriptions-item label="备件编码">{{ partDetailDialog.data.partCode }}</el-descriptions-item>
+                    <el-descriptions-item label="备件名称">{{ partDetailDialog.data.partName }}</el-descriptions-item>
+                    <el-descriptions-item label="状态">
+                        <el-tag :type="partDetailDialog.data.status === 'ENABLED' ? 'success' : 'danger'">
+                            {{ partDetailDialog.data.status === 'ENABLED' ? '启用' : '禁用' }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="创建人">{{ partDetailDialog.data.creator }}</el-descriptions-item>
+                    <el-descriptions-item label="创建时间">{{ formatDateTime(partDetailDialog.data.createdTime) }}</el-descriptions-item>
+                    <el-descriptions-item label="更新时间" v-if="partDetailDialog.data.updatedTime">
+                        {{ formatDateTime(partDetailDialog.data.updatedTime) }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="备注" :span="2">{{ partDetailDialog.data.remark || '无' }}</el-descriptions-item>
+                </el-descriptions>
+
+                <div style="margin-top: 20px;">
+                    <h4>关联工时树</h4>
+                    <div v-if="partDetailDialog.workHourTree && partDetailDialog.workHourTree.length > 0">
+                        <!-- 使用折叠面板展示工时树 -->
+                        <el-collapse accordion>
+                            <el-collapse-item v-for="(item, index) in partDetailDialog.workHourTree" :key="index">
+                                <template #title>
+                                    <div style="display: flex; align-items: center; width: 100%;">
+                                        <span style="font-weight: bold; font-size: 16px; margin-right: 10px;">{{ item.workHourVO.description }}</span>
+                                        <el-tag size="small" type="success">{{ item.workHourVO.typeDescription }}</el-tag>
+                                        <span style="margin-left: 15px; color: #909399; font-size: 13px;">
+                                            编码: {{ item.workHourVO.code }} | 工时值: {{ item.workHourVO.standardHours }}
+                                        </span>
+                                    </div>
+                                </template>
+                                
+                                <!-- 主工时详细信息 -->
+                                <div style="padding: 10px; background-color: #f5f7fa; border-radius: 4px; margin-bottom: 15px;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px;">
+                                        <div><strong>编码:</strong> {{ item.workHourVO.code }}</div>
+                                        <div><strong>名称:</strong> {{ item.workHourVO.description }}</div>
+                                        <div><strong>工时值:</strong> {{ item.workHourVO.standardHours }}</div>
+                                        <div><strong>类型:</strong> {{ item.workHourVO.typeDescription }}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 子工时列表 -->
+                                <div>
+                                    <div style="font-weight: bold; margin: 15px 0 10px; padding-left: 10px; border-left: 3px solid #409EFF;">
+                                        子工时列表
+                                    </div>
+                                    
+                                    <!-- 如果有子工时，显示表格 -->
+                                    <el-table 
+                                        v-if="item.children && item.children.length > 0" 
+                                        :data="item.children" 
+                                        border 
+                                        style="width: 100%">
+                                        <el-table-column prop="code" label="编码" width="120"></el-table-column>
+                                        <el-table-column prop="description" label="名称"></el-table-column>
+                                        <el-table-column prop="standardHours" label="工时值" width="100"></el-table-column>
+                                        <el-table-column prop="type" label="类型" width="100">
+                                            <template #default="scope">
+                                                <el-tag size="small" :type="scope.row.type === 'MAIN' ? 'success' : 'info'">
+                                                    {{ scope.row.typeDescription }}
+                                                </el-tag>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                    
+                                    <!-- 如果没有子工时，显示提示 -->
+                                    <div v-else style="text-align: center; padding: 20px; color: #909399; background-color: #fafafa; border-radius: 4px;">
+                                        <el-empty description="暂无子工时" :image-size="60"></el-empty>
+                                    </div>
+                                </div>
+                            </el-collapse-item>
+                        </el-collapse>
+                    </div>
+                    <div v-else style="text-align: center; padding: 20px; color: #909399;">
+                        暂无关联工时
+                    </div>
+                </div>
+            </div>
+            <div v-else style="text-align: center; padding: 20px; color: #909399;">
+                加载数据中...
+            </div>
+        </el-dialog>
+
+        <!-- 批量绑定工时对话框 -->
+        <el-dialog
+            v-model="batchBindDialog.visible"
+            title="批量绑定工时"
+            width="600px"
+            :close-on-click-modal="false">
+            <div style="margin-bottom: 20px;">
+                <p>请上传符合模板格式的Excel文件，进行备件与工时的批量绑定。</p>
+                <p>如需模板文件，请点击"下载模板"按钮。</p>
+            </div>
+            <el-form :model="batchBindDialog.form" :rules="batchBindDialog.rules" ref="batchBindFormRef" label-width="100px">
+                <el-form-item label="Excel文件" prop="file">
+                    <el-upload
+                        ref="uploadRef"
+                        :auto-upload="false"
+                        :limit="1"
+                        accept=".xlsx,.xls"
+                        :on-change="handleBatchBindFileChange">
+                        <el-button type="primary">选择文件</el-button>
+                        <template #tip>
+                            <div class="el-upload__tip">只能上传xlsx/xls文件，且不超过5MB</div>
+                        </template>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="创建人" prop="creator">
+                    <el-input v-model="batchBindDialog.form.creator" placeholder="请输入创建人"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="batchBindDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitBatchBind" :loading="batchBindDialog.loading">
+                        上传并绑定
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 上传模板对话框 -->
+        <el-dialog
+            v-model="uploadTemplateDialog.visible"
+            title="上传备件工时关联模板"
+            width="500px"
+            :close-on-click-modal="false">
+            <div style="margin-bottom: 20px;">
+                <p>请上传新的备件工时关联模板文件，该模板将用于后续的批量绑定操作。</p>
+            </div>
+            <el-form :model="uploadTemplateDialog.form" ref="uploadTemplateFormRef">
+                <el-form-item label="模板文件" prop="file">
+                    <el-upload
+                        ref="templateUploadRef"
+                        :auto-upload="false"
+                        :limit="1"
+                        accept=".xlsx,.xls"
+                        :on-change="handleTemplateFileChange">
+                        <el-button type="primary">选择文件</el-button>
+                        <template #tip>
+                            <div class="el-upload__tip">只能上传xlsx/xls文件，且不超过2MB</div>
+                        </template>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="uploadTemplateDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitUploadTemplate" :loading="uploadTemplateDialog.loading">
+                        上传模板
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 批量绑定结果对话框 -->
+        <el-dialog
+            v-model="batchBindResultDialog.visible"
+            title="批量绑定结果"
+            width="800px">
+            <div>
+                <el-alert
+                    :type="batchBindResultDialog.successCount > 0 ? 'success' : 'warning'"
+                    :title="`处理完成：成功 ${batchBindResultDialog.successCount} 条，失败 ${batchBindResultDialog.failCount} 条`"
+                    show-icon
+                    :closable="false"
+                    style="margin-bottom: 20px;">
+                </el-alert>
+                
+                <el-table :data="batchBindResultDialog.results" stripe>
+                    <el-table-column prop="rowNumber" label="行号" width="80"></el-table-column>
+                    <el-table-column prop="partCode" label="备件编码" width="150"></el-table-column>
+                    <el-table-column prop="hourCode" label="工时代码" width="150"></el-table-column>
+                    <el-table-column prop="success" label="状态" width="100">
+                        <template #default="scope">
+                            <el-tag :type="scope.row.success ? 'success' : 'danger'">
+                                {{ scope.row.success ? '成功' : '失败' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="errorMessage" label="错误信息"></el-table-column>
+                </el-table>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button type="primary" @click="batchBindResultDialog.visible = false">
+                        确定
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        
+        <!-- 创建/编辑主工时对话框 -->
+        <el-dialog
+            v-model="mainWorkHourDialog.visible"
+            :title="mainWorkHourDialog.isEdit ? '编辑主工时' : '新建主工时'"
+            width="500px">
+            <el-form :model="mainWorkHourDialog.form" :rules="mainWorkHourDialog.rules" ref="mainWorkHourFormRef" label-width="100px">
+                <el-form-item label="工时编码" prop="code">
+                    <el-input v-model="mainWorkHourDialog.form.code" placeholder="请输入工时编码" :disabled="mainWorkHourDialog.isEdit"></el-input>
+                </el-form-item>
+                <el-form-item label="工时描述" prop="description">
+                    <el-input v-model="mainWorkHourDialog.form.description" placeholder="请输入工时描述"></el-input>
+                </el-form-item>
+                <el-form-item label="标准工时" prop="standardHours">
+                    <el-input-number v-model="mainWorkHourDialog.form.standardHours" :precision="1" :step="0.5" :min="0" style="width: 100%;"></el-input-number>
+                </el-form-item>
+                <el-form-item label="工时类型" prop="type">
+                    <el-select v-model="mainWorkHourDialog.form.type" placeholder="请选择工时类型" style="width: 100%;">
+                        <el-option label="主工时" value="MAIN"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="创建人" prop="creator" v-if="!mainWorkHourDialog.isEdit">
+                    <el-input v-model="mainWorkHourDialog.form.creator" placeholder="请输入创建人"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="mainWorkHourDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitMainWorkHour" :loading="mainWorkHourDialog.loading">
+                        {{ mainWorkHourDialog.isEdit ? '更新' : '创建' }}
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        
+        <!-- 创建子工时对话框 -->
+        <el-dialog
+            v-model="subWorkHourDialog.visible"
+            :title="subWorkHourDialog.isEdit ? '编辑子工时' : '新建子工时'"
+            width="500px">
+            <el-form :model="subWorkHourDialog.form" :rules="subWorkHourDialog.rules" ref="subWorkHourFormRef" label-width="100px">
+                <el-form-item label="父工时" prop="parentId" v-if="!subWorkHourDialog.isEdit">
+                    <el-input v-model="subWorkHourDialog.parentWorkHourName" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="工时编码" prop="code">
+                    <el-input v-model="subWorkHourDialog.form.code" placeholder="请输入工时编码" :disabled="subWorkHourDialog.isEdit"></el-input>
+                </el-form-item>
+                <el-form-item label="工时描述" prop="description">
+                    <el-input v-model="subWorkHourDialog.form.description" placeholder="请输入工时描述"></el-input>
+                </el-form-item>
+                <el-form-item label="标准工时" prop="standardHours">
+                    <el-input-number v-model="subWorkHourDialog.form.standardHours" :precision="1" :step="0.5" :min="0" style="width: 100%;"></el-input-number>
+                </el-form-item>
+                <el-form-item label="工时类型" prop="type">
+                    <el-select v-model="subWorkHourDialog.form.type" placeholder="请选择工时类型" style="width: 100%;">
+                        <el-option label="子工时" value="SUB"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="步骤顺序" prop="stepOrder">
+                    <el-input-number v-model="subWorkHourDialog.form.stepOrder" :min="1" style="width: 100%;"></el-input-number>
+                </el-form-item>
+                <el-form-item label="创建人" prop="creator" v-if="!subWorkHourDialog.isEdit">
+                    <el-input v-model="subWorkHourDialog.form.creator" placeholder="请输入创建人"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="subWorkHourDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitSubWorkHour" :loading="subWorkHourDialog.loading">
+                        {{ subWorkHourDialog.isEdit ? '更新' : '创建' }}
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        
+        <!-- 工时详情对话框 -->
+        <el-dialog
+            v-model="workHourDetailDialog.visible"
+            title="工时详情"
+            width="600px">
+            <div v-if="workHourDetailDialog.data">
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="工时ID">{{ workHourDetailDialog.data.id }}</el-descriptions-item>
+                    <el-descriptions-item label="工时编码">{{ workHourDetailDialog.data.code }}</el-descriptions-item>
+                    <el-descriptions-item label="工时描述">{{ workHourDetailDialog.data.description }}</el-descriptions-item>
+                    <el-descriptions-item label="标准工时">{{ workHourDetailDialog.data.standardHours }}</el-descriptions-item>
+                    <el-descriptions-item label="工时类型">
+                        <el-tag :type="workHourDetailDialog.data.type === 'MAIN' ? 'success' : 'info'">
+                            {{ workHourDetailDialog.data.typeDescription }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="状态">
+                        <el-tag :type="workHourDetailDialog.data.status === 'ENABLED' ? 'success' : 'danger'">
+                            {{ workHourDetailDialog.data.status === 'ENABLED' ? '启用' : '禁用' }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="创建人">{{ workHourDetailDialog.data.creator }}</el-descriptions-item>
+                    <el-descriptions-item label="步骤顺序" v-if="workHourDetailDialog.data.isSubWorkHour">
+                        {{ workHourDetailDialog.data.stepOrder || '无' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="父工时ID" v-if="workHourDetailDialog.data.isSubWorkHour">
+                        {{ workHourDetailDialog.data.parentId }}
+                    </el-descriptions-item>
+                </el-descriptions>
+
+                <div style="margin-top: 20px;" v-if="workHourDetailDialog.data.isMainWorkHour">
+                    <h4>子工时列表</h4>
+                    <el-table :data="workHourDetailDialog.children || []" stripe>
+                        <el-table-column type="index" label="序号" width="60"></el-table-column>
+                        <el-table-column prop="code" label="工时编码" width="120"></el-table-column>
+                        <el-table-column prop="description" label="工时描述"></el-table-column>
+                        <el-table-column prop="standardHours" label="标准工时" width="100"></el-table-column>
+                        <el-table-column prop="stepOrder" label="步骤顺序" width="100"></el-table-column>
+                        <el-table-column prop="status" label="状态" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'danger'" size="small">
+                                    {{ scope.row.status === 'ENABLED' ? '启用' : '禁用' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div v-if="!workHourDetailDialog.children || workHourDetailDialog.children.length === 0" 
+                         style="text-align: center; padding: 20px; color: #909399;">
+                        暂无子工时
+                    </div>
+                </div>
+            </div>
+            <div v-else style="text-align: center; padding: 20px; color: #909399;">
+                加载数据中...
+            </div>
+        </el-dialog>
+        
+        <!-- 批量上传子工时对话框 -->
+        <el-dialog
+            v-model="batchUploadSubDialog.visible"
+            title="批量上传子工时"
+            width="600px">
+            <div style="margin-bottom: 20px;">
+                <p>请上传符合模板格式的Excel文件，进行子工时的批量上传。</p>
+                <p>如需模板文件，请点击"下载模板"按钮。</p>
+            </div>
+            <el-form :model="batchUploadSubDialog.form" :rules="batchUploadSubDialog.rules" ref="batchUploadSubFormRef" label-width="100px">
+                <el-form-item label="父工时" prop="parentId">
+                    <el-input v-model="batchUploadSubDialog.parentWorkHourName" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="Excel文件" prop="file">
+                    <el-upload
+                        ref="batchUploadRef"
+                        :auto-upload="false"
+                        :limit="1"
+                        accept=".xlsx,.xls"
+                        :on-change="handleBatchUploadFileChange">
+                        <el-button type="primary">选择文件</el-button>
+                        <template #tip>
+                            <div class="el-upload__tip">只能上传xlsx/xls文件，且不超过5MB</div>
+                        </template>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="创建人" prop="creator">
+                    <el-input v-model="batchUploadSubDialog.form.creator" placeholder="请输入创建人"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="batchUploadSubDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitBatchUploadSub" :loading="batchUploadSubDialog.loading">
+                        上传并处理
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        
+        <!-- 批量上传结果对话框 -->
+        <el-dialog
+            v-model="batchUploadResultDialog.visible"
+            title="批量上传结果"
+            width="800px">
+            <div>
+                <el-alert
+                    :type="batchUploadResultDialog.successCount > 0 ? 'success' : 'warning'"
+                    :title="`处理完成：成功 ${batchUploadResultDialog.successCount} 条，失败 ${batchUploadResultDialog.failCount} 条`"
+                    show-icon
+                    :closable="false"
+                    style="margin-bottom: 20px;">
+                </el-alert>
+                
+                <el-table :data="batchUploadResultDialog.results" stripe>
+                    <el-table-column prop="rowNumber" label="行号" width="80"></el-table-column>
+                    <el-table-column prop="code" label="工时编码" width="120"></el-table-column>
+                    <el-table-column prop="description" label="工时描述" width="200"></el-table-column>
+                    <el-table-column prop="success" label="状态" width="100">
+                        <template #default="scope">
+                            <el-tag :type="scope.row.success ? 'success' : 'danger'">
+                                {{ scope.row.success ? '成功' : '失败' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="errorMessage" label="错误信息"></el-table-column>
+                </el-table>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button type="primary" @click="batchUploadResultDialog.visible = false">
+                        确定
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        
+        <!-- 上传工时模板对话框 -->
+        <el-dialog
+            v-model="uploadWorkHourTemplateDialog.visible"
+            title="上传工时模板"
+            width="500px">
+            <div style="margin-bottom: 20px;">
+                <p>请上传新的工时模板文件，该模板将用于后续的批量上传操作。</p>
+            </div>
+            <el-form :model="uploadWorkHourTemplateDialog.form" ref="uploadWorkHourTemplateFormRef">
+                <el-form-item label="模板文件" prop="file">
+                    <el-upload
+                        ref="workHourTemplateUploadRef"
+                        :auto-upload="false"
+                        :limit="1"
+                        accept=".xlsx,.xls"
+                        :on-change="handleWorkHourTemplateFileChange">
+                        <el-button type="primary">选择文件</el-button>
+                        <template #tip>
+                            <div class="el-upload__tip">只能上传xlsx/xls文件，且不超过2MB</div>
+                        </template>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="uploadWorkHourTemplateDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="submitUploadWorkHourTemplate" :loading="uploadWorkHourTemplateDialog.loading">
+                        上传模板
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
     </div>
 
     <style>
