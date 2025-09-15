@@ -4,9 +4,11 @@ import cn.cug.sxy.domain.system.adapter.repository.ISystemGroupRepository;
 import cn.cug.sxy.domain.system.model.entity.SystemGroupEntity;
 import cn.cug.sxy.domain.system.model.valobj.CategoryId;
 import cn.cug.sxy.domain.system.model.valobj.GroupCode;
+import cn.cug.sxy.domain.system.model.valobj.GroupId;
 import cn.cug.sxy.infrastructure.converter.SystemGroupConverter;
 import cn.cug.sxy.infrastructure.dao.ISystemGroupDao;
 import cn.cug.sxy.infrastructure.dao.po.SystemGroupPO;
+import cn.cug.sxy.infrastructure.redis.IRedisService;
 import cn.cug.sxy.types.common.Constants;
 import org.springframework.stereotype.Repository;
 
@@ -25,9 +27,13 @@ import java.util.Optional;
 public class SystemGroupRepository extends AbstractRepository implements ISystemGroupRepository {
 
     private final ISystemGroupDao systemGroupDao;
+    private final IRedisService redisService;
 
-    public SystemGroupRepository(ISystemGroupDao systemGroupDao) {
+    public SystemGroupRepository(
+            ISystemGroupDao systemGroupDao,
+            IRedisService redisService) {
         this.systemGroupDao = systemGroupDao;
+        this.redisService = redisService;
     }
 
     @Override
@@ -116,6 +122,77 @@ public class SystemGroupRepository extends AbstractRepository implements ISystem
         }
 
         return systemGroupDao.countByGroupCode(groupCode.getCode()) > 0;
+    }
+
+    @Override
+    public int deleteById(GroupId groupId) {
+        if (groupId == null) {
+            return 0;
+        }
+
+        // 先获取分组信息，用于清除相关缓存
+        SystemGroupPO groupPO = systemGroupDao.selectById(groupId.getId());
+        if (groupPO != null) {
+            // 清除分组编码缓存
+            String codeKey = Constants.RedisKey.SYS_GROUP_BY_CODE_KEY + groupPO.getGroupCode();
+            redisService.remove(codeKey);
+            // 清除分组所属大类缓存
+            String categoryKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + groupPO.getCategoryId();
+            redisService.remove(categoryKey);
+        }
+        // 清除所有分组缓存，因为列表已变更
+        redisService.remove(Constants.RedisKey.SYS_GROUP_ALL_KEY);
+        // 执行删除
+        return systemGroupDao.deleteById(groupId.getId());
+    }
+
+    @Override
+    public int logicalDeleteById(GroupId groupId) {
+        if (groupId == null) {
+            return 0;
+        }
+        // 先获取分组信息，用于清除相关缓存
+        SystemGroupPO groupPO = systemGroupDao.selectById(groupId.getId());
+        if (groupPO != null) {
+            // 清除分组编码缓存
+            String codeKey = Constants.RedisKey.SYS_GROUP_BY_CODE_KEY + groupPO.getGroupCode();
+            redisService.remove(codeKey);
+            // 清除分组所属大类缓存
+            String categoryKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + groupPO.getCategoryId();
+            redisService.remove(categoryKey);
+        }
+        // 清除所有分组缓存，因为列表已变更
+        redisService.remove(Constants.RedisKey.SYS_GROUP_ALL_KEY);
+        // 执行逻辑删除
+        return systemGroupDao.logicalDeleteById(groupId.getId());
+    }
+
+    @Override
+    public int deleteByCategoryId(CategoryId categoryId) {
+        if (categoryId == null) {
+            return 0;
+        }
+        // 清除分类下分组的缓存
+        String categoryKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + categoryId.getId();
+        redisService.remove(categoryKey);
+        // 清除所有分组缓存，因为列表已变更
+        redisService.remove(Constants.RedisKey.SYS_GROUP_ALL_KEY);
+        // 执行删除
+        return systemGroupDao.deleteByCategoryId(categoryId.getId());
+    }
+
+    @Override
+    public int logicalDeleteByCategoryId(CategoryId categoryId) {
+        if (categoryId == null) {
+            return 0;
+        }
+        // 清除分类下分组的缓存
+        String categoryKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + categoryId.getId();
+        redisService.remove(categoryKey);
+        // 清除所有分组缓存，因为列表已变更
+        redisService.remove(Constants.RedisKey.SYS_GROUP_ALL_KEY);
+        // 执行逻辑删除
+        return systemGroupDao.logicalDeleteByCategoryId(categoryId.getId());
     }
 
 }

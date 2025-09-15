@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cug.sxy.infrastructure.dao.IUsagePartDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="UsagePartResultMap" type="cn.cug.sxy.infrastructure.dao.po.UsagePartPO">
+        <id column="id" property="id"/>
+        <result column="usage_id" property="usageId"/>
+        <result column="part_id" property="partId"/>
+        <result column="count" property="count"/>
+        <result column="created_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, usage_id, part_id, count, created_time
+    </sql>
+
+    <!-- 插入用法备件关联记录 -->
+    <insert id="insert" parameterType="cn.cug.sxy.infrastructure.dao.po.UsagePartPO" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO usage_part (usage_id, part_id, count)
+        VALUES (#{usageId}, #{partId}, #{count})
+    </insert>
+
+    <!-- 批量插入用法备件关联记录 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO usage_part (usage_id, part_id, count)
+        VALUES
+        <foreach collection="usagePartPOList" item="item" separator=",">
+            (#{item.usageId}, #{item.partId}, #{item.count})
+        </foreach>
+    </insert>
+
+    <!-- 根据用法ID和备件ID删除关联 -->
+    <delete id="deleteByUsageIdAndPartId">
+        DELETE FROM usage_part
+        WHERE usage_id = #{usageId}
+          AND part_id = #{partId}
+    </delete>
+
+    <!-- 根据用法ID删除所有关联 -->
+    <delete id="deleteByUsageId" parameterType="java.lang.Long">
+        DELETE FROM usage_part
+        WHERE usage_id = #{usageId}
+    </delete>
+
+    <!-- 根据备件ID删除所有关联 -->
+    <delete id="deleteByPartId" parameterType="java.lang.Long">
+        DELETE FROM usage_part
+        WHERE part_id = #{partId}
+    </delete>
+
+    <!-- 更新用法备件关联数量 -->
+    <update id="updateCount" parameterType="cn.cug.sxy.infrastructure.dao.po.UsagePartPO">
+        UPDATE usage_part
+        SET count = #{count}
+        WHERE usage_id = #{usageId}
+          AND part_id = #{partId}
+    </update>
+
+    <!-- 根据用法ID查询所有关联的备件 -->
+    <select id="selectByUsageId" parameterType="java.lang.Long" resultMap="UsagePartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_part
+        WHERE usage_id = #{usageId}
+    </select>
+
+    <!-- 根据备件ID查询所有关联的用法 -->
+    <select id="selectByPartId" parameterType="java.lang.Long" resultMap="UsagePartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_part
+        WHERE part_id = #{partId}
+    </select>
+
+    <!-- 根据用法ID和备件ID查询关联 -->
+    <select id="selectByUsageIdAndPartId" resultMap="UsagePartResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM usage_part
+        WHERE usage_id = #{usageId}
+        AND part_id = #{partId}
+        LIMIT 1
+    </select>
+
+    <!-- 检查用法和备件是否已关联 -->
+    <select id="exists" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM usage_part
+        WHERE usage_id = #{usageId}
+          AND part_id = #{partId}
+    </select>
+
+</mapper>

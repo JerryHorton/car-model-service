@@ -26,7 +26,12 @@ public enum TemplateFileType {
             return "templates/parthour/template.xlsx";
         }
     },
-    ;
+    USAGE_PART("usage_part") {
+        @Override
+        public String generateTemplatePath() {
+            return "templates/usagepart/template.xlsx";
+        }
+    };
 
     private final String type;
 

@@ -121,4 +121,40 @@ public class SystemGroupService implements ISystemGroupService {
         return systemGroupRepository.existsByGroupCode(groupCode);
     }
 
+    @Override
+    public boolean deleteGroup(GroupId groupId) {
+        if (groupId == null) {
+            return false;
+        }
+
+        return systemGroupRepository.deleteById(groupId) > 0;
+    }
+
+    @Override
+    public boolean logicalDeleteGroup(GroupId groupId) {
+        if (groupId == null) {
+            return false;
+        }
+
+        return systemGroupRepository.logicalDeleteById(groupId) > 0;
+    }
+
+    @Override
+    public boolean deleteGroupsByCategoryId(CategoryId categoryId) {
+        if (categoryId == null) {
+            return false;
+        }
+
+        return systemGroupRepository.deleteByCategoryId(categoryId) > 0;
+    }
+
+    @Override
+    public boolean logicalDeleteGroupsByCategoryId(CategoryId categoryId) {
+        if (categoryId == null) {
+            return false;
+        }
+
+        return systemGroupRepository.logicalDeleteByCategoryId(categoryId) > 0;
+    }
+
 }

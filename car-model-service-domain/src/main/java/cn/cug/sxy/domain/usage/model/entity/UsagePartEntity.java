@@ -1,5 +1,7 @@
 package cn.cug.sxy.domain.usage.model.entity;
 
+import cn.cug.sxy.domain.part.model.valobj.PartId;
+import cn.cug.sxy.domain.usage.model.valobj.UsageId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,16 +23,53 @@ import java.time.LocalDateTime;
 public class UsagePartEntity {
 
     /**
+     * 主键
+     */
+    private Long id;
+    /**
      * 用法ID
      */
-    private Long usageId;
+    private UsageId usageId;
     /**
      * 备件ID
      */
-    private Long partId;
+    private PartId partId;
     /**
      * 数量
      */
     private Integer count;
+    /**
+     * 备件编码（非数据库字段，用于展示）
+     */
+    private String partCode;
+    /**
+     * 备件名称（非数据库字段，用于展示）
+     */
+    private String partName;
+
+    /**
+     * 创建用法备件关联
+     *
+     * @param usageId 用法ID
+     * @param partId  备件ID
+     * @param count   数量
+     * @return 用法备件关联实体
+     */
+    public static UsagePartEntity create(UsageId usageId, PartId partId, Integer count) {
+        return UsagePartEntity.builder()
+                .usageId(usageId)
+                .partId(partId)
+                .count(count)
+                .build();
+    }
+
+    /**
+     * 更新数量
+     *
+     * @param count 数量
+     */
+    public void updateCount(Integer count) {
+        this.count = count;
+    }
 
 }

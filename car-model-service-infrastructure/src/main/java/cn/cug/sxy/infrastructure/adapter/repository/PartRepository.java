@@ -28,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @version 1.0
@@ -158,17 +157,6 @@ public class PartRepository implements IPartRepository {
     }
 
     @Override
-    public List<PartEntity> findByStatus(Status status) {
-        if (status == null) {
-            return List.of();
-        }
-
-        List<PartPO> partPOList = partDao.selectByStatus(status.getCode());
-
-        return PartConverter.toEntityList(partPOList);
-    }
-
-    @Override
     public List<PartBindHourExcelData> readPartHourExcel(MultipartFile file) throws IOException {
         return ExcelUtils.readExcel(file, new PartBindHourExcelRowParser());
     }
@@ -203,18 +191,6 @@ public class PartRepository implements IPartRepository {
         partHourDao.insert(partHourPO);
 
         return true;
-    }
-
-    @Override
-    public List<WorkHourId> findHourIdsByPartId(PartId partId) {
-        if (partId == null) {
-            return List.of();
-        }
-        List<PartHourPO> partHourPOList = partHourDao.selectByPartId(partId.getId());
-
-        return partHourPOList.stream()
-                .map(po -> new WorkHourId(po.getHourId()))
-                .collect(Collectors.toList());
     }
 
     @Override

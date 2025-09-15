@@ -19,9 +19,9 @@ public class ExcelDataValidator {
     /**
      * 验证Excel数据列表
      *
-     * @param dataList 数据列表
+     * @param dataList  数据列表
      * @param validator 验证函数
-     * @param <T> 数据类型
+     * @param <T>       数据类型
      * @throws AppException 验证失败异常
      */
     public static <T> void validateDataList(List<T> dataList, Function<T, String> validator) {
@@ -41,7 +41,7 @@ public class ExcelDataValidator {
     /**
      * 验证字符串字段不为空
      *
-     * @param value 字段值
+     * @param value     字段值
      * @param fieldName 字段名称
      * @return 错误信息，null表示验证通过
      */
@@ -55,7 +55,7 @@ public class ExcelDataValidator {
     /**
      * 验证数字字段
      *
-     * @param value 字段值
+     * @param value     字段值
      * @param fieldName 字段名称
      * @return 错误信息，null表示验证通过
      */
@@ -75,7 +75,7 @@ public class ExcelDataValidator {
     /**
      * 验证整数字段
      *
-     * @param value 字段值
+     * @param value     字段值
      * @param fieldName 字段名称
      * @return 错误信息，null表示验证通过
      */

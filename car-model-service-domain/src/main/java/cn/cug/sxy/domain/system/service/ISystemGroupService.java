@@ -100,4 +100,36 @@ public interface ISystemGroupService {
      */
     boolean isCodeExists(GroupCode groupCode);
 
+    /**
+     * 物理删除系统分组
+     *
+     * @param groupId 分组ID
+     * @return 删除结果
+     */
+    boolean deleteGroup(GroupId groupId);
+
+    /**
+     * 逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param groupId 分组ID
+     * @return 删除结果
+     */
+    boolean logicalDeleteGroup(GroupId groupId);
+
+    /**
+     * 根据大类ID物理删除系统分组
+     *
+     * @param categoryId 大类ID
+     * @return 删除结果
+     */
+    boolean deleteGroupsByCategoryId(CategoryId categoryId);
+
+    /**
+     * 根据大类ID逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param categoryId 大类ID
+     * @return 删除结果
+     */
+    boolean logicalDeleteGroupsByCategoryId(CategoryId categoryId);
+
 }

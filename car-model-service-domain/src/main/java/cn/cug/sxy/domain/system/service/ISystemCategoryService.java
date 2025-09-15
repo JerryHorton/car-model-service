@@ -97,4 +97,22 @@ public interface ISystemCategoryService {
      */
     boolean isCodeExists(CategoryCode categoryCode);
 
+    /**
+     * 物理删除系统大类
+     * 注意：此操作会同时删除该大类下的所有分组
+     *
+     * @param categoryId 大类ID
+     * @return 删除结果
+     */
+    boolean deleteCategory(CategoryId categoryId);
+
+    /**
+     * 逻辑删除系统大类（更新状态为DELETED）
+     * 注意：此操作会同时逻辑删除该大类下的所有分组
+     *
+     * @param categoryId 大类ID
+     * @return 删除结果
+     */
+    boolean logicalDeleteCategory(CategoryId categoryId);
+
 }

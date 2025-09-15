@@ -1,11 +1,13 @@
 package cn.cug.sxy.domain.system.service;
 
 import cn.cug.sxy.domain.system.adapter.repository.ISystemCategoryRepository;
+import cn.cug.sxy.domain.system.adapter.repository.ISystemGroupRepository;
 import cn.cug.sxy.domain.system.model.entity.SystemCategoryEntity;
 import cn.cug.sxy.domain.system.model.valobj.CategoryCode;
 import cn.cug.sxy.domain.system.model.valobj.CategoryId;
 import cn.cug.sxy.domain.system.model.valobj.CategoryStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +23,13 @@ import java.util.Optional;
 public class SystemCategoryService implements ISystemCategoryService {
 
     private final ISystemCategoryRepository systemCategoryRepository;
+    private final ISystemGroupRepository systemGroupRepository;
 
-    public SystemCategoryService(ISystemCategoryRepository systemCategoryRepository) {
+    public SystemCategoryService(
+            ISystemCategoryRepository systemCategoryRepository,
+            ISystemGroupRepository systemGroupRepository) {
         this.systemCategoryRepository = systemCategoryRepository;
+        this.systemGroupRepository = systemGroupRepository;
     }
 
     @Override
@@ -105,6 +111,30 @@ public class SystemCategoryService implements ISystemCategoryService {
     @Override
     public boolean isCodeExists(CategoryCode categoryCode) {
         return systemCategoryRepository.existsByCategoryCode(categoryCode);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteCategory(CategoryId categoryId) {
+        if (categoryId == null) {
+            return false;
+        }
+        // 先删除该大类下的所有分组
+        systemGroupRepository.deleteByCategoryId(categoryId);
+        // 再删除大类
+        return systemCategoryRepository.deleteById(categoryId) > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean logicalDeleteCategory(CategoryId categoryId) {
+        if (categoryId == null) {
+            return false;
+        }
+        // 先逻辑删除该大类下的所有分组
+        systemGroupRepository.logicalDeleteByCategoryId(categoryId);
+        // 再逻辑删除大类
+        return systemCategoryRepository.logicalDeleteById(categoryId) > 0;
     }
 
 }

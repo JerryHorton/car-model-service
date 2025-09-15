@@ -88,7 +88,7 @@ public class ExcelUtils {
         }
         for (int i = 0; i < columnCount; i++) {
             Cell cell = row.getCell(i);
-            if (cell != null && StringUtils.isNotBlank(cell.getStringCellValue())) {
+            if (cell != null && StringUtils.isNotBlank(getCellValueAsString(cell))) {
                 return false;
             }
         }

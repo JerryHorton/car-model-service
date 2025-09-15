@@ -1360,43 +1360,153 @@
         <el-dialog
             v-model="usageDetailDialog.visible"
             :title="`用法详情 - ${usageDetailDialog.usageName || ''}`"
-            width="800px">
-            <div v-if="usageDetailDialog.data">
-                <h3>配置组合列表</h3>
-                <el-table :data="usageDetailDialog.data.combinations" stripe>
-                    <el-table-column type="index" label="序号" width="80" :index="(index) => index + 1"></el-table-column>
-                    <el-table-column prop="combinationName" label="组合名称" width="200"></el-table-column>
-                    <el-table-column prop="sortOrder" label="排序" width="80"></el-table-column>
-                    <el-table-column label="配置项数量" width="120">
-                        <template #default="scope">
-                            <el-tag type="info" size="small">
-                                {{ scope.row.configItems?.length || 0 }} 项
+            width="80%"
+            :close-on-click-modal="false">
+            <el-tabs v-model="usageDetailDialog.activeTab">
+                <el-tab-pane label="基本信息" name="basic">
+                    <el-descriptions :column="2" border>
+                        <el-descriptions-item label="用法ID">{{ usageDetailDialog.usageId }}</el-descriptions-item>
+                        <el-descriptions-item label="用法名称">{{ usageDetailDialog.usageName }}</el-descriptions-item>
+                        <el-descriptions-item label="创建时间">{{ formatDateTime(usageDetailDialog.createdTime) }}</el-descriptions-item>
+                        <el-descriptions-item label="更新时间">{{ formatDateTime(usageDetailDialog.updatedTime) }}</el-descriptions-item>
+                        <el-descriptions-item label="状态">
+                            <el-tag :type="usageDetailDialog.status === 'ENABLED' ? 'success' : 'danger'">
+                                {{ usageDetailDialog.status === 'ENABLED' ? '正常' : '已删除' }}
                             </el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="配置项详情" min-width="400">
-                        <template #default="scope">
-                            <div v-if="scope.row.configItems && scope.row.configItems.length > 0">
-                                <div v-for="item in scope.row.configItems" :key="item.id"
-                                     style="margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap;">
-                                    <span style="font-weight: bold; color: #409EFF; margin-right: 8px;">
-                                        {{ item.itemName }}:
-                                    </span>
-                                    <el-tag type="success" size="small" effect="light">
-                                        {{ item.itemValue }}
-                                    </el-tag>
-                                </div>
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-tab-pane>
+                
+                <el-tab-pane label="配置组合" name="config">
+                    <div class="config-combinations">
+                        <div class="toolbar">
+                            <el-button type="primary" @click="showCreateCombinationDialog">
+                                <i class="el-icon-plus"></i> 添加配置组合
+                            </el-button>
+                        </div>
+                        <el-table
+                            :data="usageDetailDialog.combinations"
+                            v-loading="combinationsLoading"
+                            style="width: 100%">
+                            <el-table-column type="index" label="序号" width="80"></el-table-column>
+                            <el-table-column prop="combinationName" label="组合名称"></el-table-column>
+                            <el-table-column prop="sortOrder" label="排序" width="100"></el-table-column>
+                            <el-table-column label="操作" width="250">
+                                <template #default="scope">
+                                    <el-button size="small" @click="viewCombinationDetails(scope.row)">
+                                        查看明细
+                                    </el-button>
+                                    <el-button size="small" type="danger" @click="deleteCombination(scope.row)">
+                                        删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </el-tab-pane>
+                
+                <el-tab-pane label="爆炸图" name="exploded">
+                    <div class="exploded-view">
+                        <div class="toolbar" style="margin-bottom: 20px;">
+                            <el-upload
+                                action="#"
+                                :http-request="uploadExplodedView"
+                                :show-file-list="false"
+                                :before-upload="beforeExplodedViewUpload">
+                                <el-button type="primary">
+                                    <i class="el-icon-upload"></i> 上传爆炸图
+                                </el-button>
+                            </el-upload>
+                        </div>
+                        
+                        <div v-if="usageDetailDialog.explodedViewImg" class="image-container">
+                            <img :src="usageDetailDialog.explodedViewImg" alt="爆炸图" style="max-width: 100%;">
+                        </div>
+                        <el-empty v-else description="暂无爆炸图"></el-empty>
+                    </div>
+                </el-tab-pane>
+                
+                <el-tab-pane label="关联备件" name="parts">
+                    <div class="related-parts">
+                        <div class="toolbar">
+                            <div class="left-buttons">
+                                <el-upload
+                                    action="#"
+                                    :http-request="uploadPartRelations"
+                                    :show-file-list="false"
+                                    :before-upload="beforePartUpload">
+                                    <el-button type="primary">
+                                        <i class="el-icon-upload"></i> 批量上传备件
+                                    </el-button>
+                                </el-upload>
+                                <el-button @click="downloadPartTemplate" type="success">
+                                    <i class="el-icon-download"></i> 下载模板
+                                </el-button>
+                                <el-button @click="clearAllParts" type="danger">
+                                    <i class="el-icon-delete"></i> 清空所有备件
+                                </el-button>
                             </div>
-                            <span v-else style="color: #999;">暂无配置项</span>
-                        </template>
-                    </el-table-column>
-                </el-table>
-
-                <div v-if="!usageDetailDialog.data.combinations || usageDetailDialog.data.combinations.length === 0"
-                     style="text-align: center; padding: 40px; color: #999;">
-                    暂无配置组合数据
-                </div>
-            </div>
+                            <div class="search-box">
+                                                                        <el-input
+                                            v-model="partSearch.keyword"
+                                            placeholder="搜索备件编码或名称"
+                                            @keyup.enter="searchRelatedParts"
+                                            clearable
+                                            style="width: 200px; margin-right: 10px;">
+                                        </el-input>
+                                        <el-button @click="searchRelatedParts" type="primary">
+                                            🔍 搜索
+                                        </el-button>
+                            </div>
+                        </div>
+                        
+                        <el-table
+                            :data="usageDetailDialog.relatedParts"
+                            v-loading="relatedPartsLoading"
+                            style="width: 100%; margin-top: 20px;">
+                            <el-table-column type="index" label="序号" width="80"></el-table-column>
+                            <el-table-column prop="partCode" label="备件编码" width="150"></el-table-column>
+                            <el-table-column prop="partName" label="备件名称"></el-table-column>
+                            <el-table-column prop="count" label="数量" width="100"></el-table-column>
+                            <el-table-column label="操作" width="150">
+                                <template #default="scope">
+                                    <el-button size="small" type="danger" @click="unbindPart(scope.row)">
+                                        解绑
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        
+                        <!-- 批量上传结果对话框 -->
+                        <el-dialog
+                            v-model="batchUploadResultDialog.visible"
+                            title="批量上传结果"
+                            width="80%"
+                            append-to-body>
+                            <el-table
+                                :data="batchUploadResultDialog.results"
+                                style="width: 100%">
+                                <el-table-column prop="rowNumber" label="行号" width="80"></el-table-column>
+                                <el-table-column prop="partCode" label="备件编码" width="150"></el-table-column>
+                                <el-table-column prop="count" label="数量" width="100"></el-table-column>
+                                <el-table-column label="状态" width="100">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.success ? 'success' : 'danger'">
+                                            {{ scope.row.success ? '成功' : '失败' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="errorMessage" label="错误信息"></el-table-column>
+                            </el-table>
+                            <template #footer>
+                                <div class="dialog-footer">
+                                    <el-button @click="batchUploadResultDialog.visible = false">关闭</el-button>
+                                </div>
+                            </template>
+                        </el-dialog>
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
         </el-dialog>
 
         <!-- 爆炸图查看对话框 -->

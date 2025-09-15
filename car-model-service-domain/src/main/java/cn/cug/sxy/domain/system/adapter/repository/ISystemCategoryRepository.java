@@ -78,4 +78,20 @@ public interface ISystemCategoryRepository {
      */
     boolean existsByCategoryCode(CategoryCode categoryCode);
 
+    /**
+     * 物理删除系统大类
+     *
+     * @param categoryId 大类ID
+     * @return 删除的记录数
+     */
+    int deleteById(CategoryId categoryId);
+
+    /**
+     * 逻辑删除系统大类（更新状态为DELETED）
+     *
+     * @param categoryId 大类ID
+     * @return 更新的记录数
+     */
+    int logicalDeleteById(CategoryId categoryId);
+
 }

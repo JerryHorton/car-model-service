@@ -60,6 +60,14 @@ public interface IUsageService {
     Response<UsageBaseVO> updateUsage(UsageUpdateRequestDTO requestDTO);
 
     /**
+     * 删除配置组合
+     *
+     * @param combinationId 配置组合ID
+     * @return 删除结果
+     */
+    Response<Boolean> deleteCombination(Long combinationId);
+
+    /**
      * 删除用法
      *
      * @param usageId 用法ID

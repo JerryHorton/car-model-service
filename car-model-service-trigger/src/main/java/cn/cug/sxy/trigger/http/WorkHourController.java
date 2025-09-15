@@ -48,12 +48,15 @@ public class WorkHourController implements IWorkHourService {
 
     private final IWorkHourQueryService workHourQueryService;
     private final IWorkHourCommandService workHourCommandService;
+    private final ToVOConverter toVOConverter;
 
     public WorkHourController(
             IWorkHourQueryService workHourQueryService,
-            IWorkHourCommandService workHourCommandService) {
+            IWorkHourCommandService workHourCommandService,
+            ToVOConverter toVOConverter) {
         this.workHourQueryService = workHourQueryService;
         this.workHourCommandService = workHourCommandService;
+        this.toVOConverter = toVOConverter;
     }
 
     @RequestMapping(value = "create_main", method = RequestMethod.POST)
@@ -69,7 +72,7 @@ public class WorkHourController implements IWorkHourService {
                     WorkHourType.fromCode(requestDTO.getType()),
                     requestDTO.getCreator()
             );
-            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = toVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("创建主工时成功 id={}, code={}", workHourEntity.getId().getId(), requestDTO.getCode());
 
             return Response.<WorkHourVO>builder()
@@ -109,7 +112,7 @@ public class WorkHourController implements IWorkHourService {
                     requestDTO.getStepOrder(),
                     requestDTO.getCreator()
             );
-            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = toVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("创建子工时成功 id={}, code={}", workHourEntity.getId().getId(), requestDTO.getCode());
 
             return Response.<WorkHourVO>builder()
@@ -173,7 +176,7 @@ public class WorkHourController implements IWorkHourService {
             return Response.<List<WorkHourBatchUploadResultVO>>builder()
                     .code(ResponseCode.SUCCESS.getCode())
                     .info(ResponseCode.SUCCESS.getInfo())
-                    .data(results.stream().map(ToVOConverter::convertToWorkHourBatchUploadResultVO).collect(Collectors.toList()))
+                    .data(results.stream().map(toVOConverter::convertToWorkHourBatchUploadResultVO).collect(Collectors.toList()))
                     .build();
         } catch (AppException e) {
             log.error("批量上传子工时失败 parentId={}", parentId, e);
@@ -288,7 +291,7 @@ public class WorkHourController implements IWorkHourService {
                     requestDTO.getStandardHours(),
                     requestDTO.getStepOrder()
             );
-            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = toVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("更新工时成功 workHourId={}", requestDTO.getWorkHourId());
 
             return Response.<WorkHourVO>builder()
@@ -320,7 +323,7 @@ public class WorkHourController implements IWorkHourService {
             log.info("查询所有主工时");
             List<WorkHourEntity> workHourEntities = workHourQueryService.getAllMainWorkHours();
             List<WorkHourVO> workHourVOs = workHourEntities.stream()
-                    .map(ToVOConverter::convertToWorkHourVO)
+                    .map(toVOConverter::convertToWorkHourVO)
                     .collect(Collectors.toList());
             log.info("查询所有主工时成功，数量={}", workHourVOs.size());
 
@@ -346,7 +349,7 @@ public class WorkHourController implements IWorkHourService {
             log.info("根据父ID查询子工时 parentId={}", parentId);
             List<WorkHourEntity> workHourEntities = workHourQueryService.getByParentId(new WorkHourId(parentId));
             List<WorkHourVO> workHourVOs = workHourEntities.stream()
-                    .map(ToVOConverter::convertToWorkHourVO)
+                    .map(toVOConverter::convertToWorkHourVO)
                     .collect(Collectors.toList());
             log.info("根据父ID查询子工时成功 parentId={}, 数量={}", parentId, workHourVOs.size());
 
@@ -371,7 +374,7 @@ public class WorkHourController implements IWorkHourService {
         try {
             log.info("查询工时树结构 workHourId={}", workHourId);
             WorkHourEntity workHourEntity = workHourQueryService.getWorkHourTree(new WorkHourId(workHourId));
-            WorkHourTreeVO workHourTreeVO = ToVOConverter.convertToWorkHourTreeVO(workHourEntity);
+            WorkHourTreeVO workHourTreeVO = toVOConverter.convertToWorkHourTreeVO(workHourEntity);
             log.info("查询工时树结构成功 workHourId={}", workHourId);
 
             return Response.<WorkHourTreeVO>builder()
@@ -405,7 +408,7 @@ public class WorkHourController implements IWorkHourService {
             if (workHourEntity == null) {
                 throw new AppException(ResponseCode.WORK_HOUR_NOT_FOUND_ERROR);
             }
-            WorkHourVO workHourVO = ToVOConverter.convertToWorkHourVO(workHourEntity);
+            WorkHourVO workHourVO = toVOConverter.convertToWorkHourVO(workHourEntity);
             log.info("查询工时详情成功 workHourId={}", workHourId);
 
             return Response.<WorkHourVO>builder()

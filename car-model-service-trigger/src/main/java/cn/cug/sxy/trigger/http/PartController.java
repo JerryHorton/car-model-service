@@ -52,14 +52,17 @@ public class PartController implements IPartService {
     private final IPartQueryService partQueryService;
     private final IPartCommandService partCommandService;
     private final IWorkHourQueryService workHourQueryService;
+    private final ToVOConverter toVOConverter;
 
     public PartController(
             final IPartQueryService partQueryService,
             final IPartCommandService partCommandService,
-            final IWorkHourQueryService workHourQueryService) {
+            final IWorkHourQueryService workHourQueryService,
+            final ToVOConverter toVOConverter) {
         this.partQueryService = partQueryService;
         this.partCommandService = partCommandService;
         this.workHourQueryService = workHourQueryService;
+        this.toVOConverter = toVOConverter;
     }
 
     @RequestMapping(value = "create_part", method = RequestMethod.POST)
@@ -74,7 +77,7 @@ public class PartController implements IPartService {
                     requestDTO.getCreator(),
                     requestDTO.getRemark()
             );
-            PartVO partVO = ToVOConverter.convertToPartVO(partEntity);
+            PartVO partVO = toVOConverter.convertToPartVO(partEntity);
             log.info("创建备件成功 id={}, code={}", partEntity.getId().getId(), requestDTO.getPartCode());
 
             return Response.<PartVO>builder()
@@ -193,7 +196,7 @@ public class PartController implements IPartService {
                     requestDTO.getPartName(),
                     requestDTO.getRemark()
             );
-            PartVO partVO = ToVOConverter.convertToPartVO(partEntity);
+            PartVO partVO = toVOConverter.convertToPartVO(partEntity);
             log.info("更新备件成功 id={}", requestDTO.getId());
 
             return Response.<PartVO>builder()
@@ -232,9 +235,9 @@ public class PartController implements IPartService {
             // 查询备件关联工时信息
             List<WorkHourEntity> workHourEntityList = workHourQueryService.getWorkHourTreeByPartId(new PartId(partId));
             List<WorkHourTreeVO> workHourTreeVOList = workHourEntityList.stream()
-                    .map(ToVOConverter::convertToWorkHourTreeVO)
+                    .map(toVOConverter::convertToWorkHourTreeVO)
                     .toList();
-            PartVO partVO = ToVOConverter.convertToPartVO(partEntity);
+            PartVO partVO = toVOConverter.convertToPartVO(partEntity);
             PartDetailVO partDetailVO = PartDetailVO.builder()
                     .partVO(partVO)
                     .workHourTreeVOList(workHourTreeVOList)
@@ -267,7 +270,7 @@ public class PartController implements IPartService {
         try {
             log.info("查询所有备件");
             List<PartEntity> partEntities = partQueryService.getAllParts();
-            List<PartVO> partVOs = ToVOConverter.convertToPartVOList(partEntities);
+            List<PartVO> partVOs = toVOConverter.convertToPartVOList(partEntities);
             log.info("查询所有备件成功，数量={}", partVOs.size());
 
             return Response.<List<PartVO>>builder()
@@ -389,7 +392,7 @@ public class PartController implements IPartService {
             log.info("批量绑定备件工时关系成功，处理记录数={}", results.size());
             // 转换为VO
             List<PartBindHourResultVO> resultVOs = results.stream()
-                    .map(ToVOConverter::convertToPartBindHourResultVO)
+                    .map(toVOConverter::convertToPartBindHourResultVO)
                     .collect(Collectors.toList());
 
             return Response.<List<PartBindHourResultVO>>builder()

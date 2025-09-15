@@ -27,10 +27,6 @@ public class UsagePO {
      */
     private String explodedViewImg;
     /**
-     * 下载URL
-     */
-    private String downloadUrl;
-    /**
      * 状态
      */
     private String status;

@@ -32,6 +32,14 @@ public interface ISystemGroupDao {
     int update(SystemGroupPO systemGroupPO);
 
     /**
+     * 根据ID查询系统分组
+     *
+     * @param id 分组ID
+     * @return 系统分组PO
+     */
+    SystemGroupPO selectById(Long id);
+
+    /**
      * 根据分组编码查询系统分组
      *
      * @param groupCode 分组编码
@@ -77,5 +85,37 @@ public interface ISystemGroupDao {
      * @return 记录数
      */
     int countByGroupCode(String groupCode);
+
+    /**
+     * 根据ID物理删除系统分组
+     *
+     * @param id 分组ID
+     * @return 影响行数
+     */
+    int deleteById(Long id);
+
+    /**
+     * 根据ID逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param id 分组ID
+     * @return 影响行数
+     */
+    int logicalDeleteById(Long id);
+
+    /**
+     * 根据大类ID物理删除系统分组
+     *
+     * @param categoryId 大类ID
+     * @return 影响行数
+     */
+    int deleteByCategoryId(Long categoryId);
+
+    /**
+     * 根据大类ID逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param categoryId 大类ID
+     * @return 影响行数
+     */
+    int logicalDeleteByCategoryId(Long categoryId);
 
 }

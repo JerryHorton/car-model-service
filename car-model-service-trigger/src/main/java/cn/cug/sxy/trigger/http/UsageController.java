@@ -246,6 +246,38 @@ public class UsageController implements IUsageService {
         }
     }
 
+    @RequestMapping(value = "delete_combination", method = RequestMethod.POST)
+    public Response<Boolean> deleteCombination(@RequestParam Long combinationId) {
+        try {
+            if (combinationId == null) {
+                throw new AppException("配置组合ID不能为空");
+            }
+            log.info("删除配置组合 combinationId={}", combinationId);
+            boolean deleted = usageManagementService.deleteCombination(combinationId);
+            log.info("删除配置组合成功 combinationId={}, deleted={}", combinationId, deleted);
+
+            return Response.<Boolean>builder()
+                    .code(ResponseCode.SUCCESS.getCode())
+                    .info(ResponseCode.SUCCESS.getInfo())
+                    .data(deleted)
+                    .build();
+        } catch (AppException e) {
+            log.error("删除配置组合失败 combinationId={}", combinationId, e);
+
+            return Response.<Boolean>builder()
+                    .code(e.getCode())
+                    .info(e.getInfo())
+                    .build();
+        } catch (Exception e) {
+            log.error("删除配置组合异常 combinationId={}", combinationId, e);
+
+            return Response.<Boolean>builder()
+                    .code(ResponseCode.UN_ERROR.getCode())
+                    .info(ResponseCode.UN_ERROR.getInfo())
+                    .build();
+        }
+    }
+
     @RequestMapping(value = "delete_usage", method = RequestMethod.POST)
     @Override
     public Response<Boolean> deleteUsage(Long usageId) {

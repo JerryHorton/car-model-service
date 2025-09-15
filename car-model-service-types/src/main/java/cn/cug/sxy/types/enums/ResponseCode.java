@@ -39,6 +39,9 @@ public enum ResponseCode {
     PART_BIND_HOUR_NOT_MAIN_ERROR("ERR_BIZ_305", "只能绑定主工时"),
     PART_BIND_DUPLICATE_ERROR("ERR_BIZ_306", "备件与该工时已绑定"),
 
+    USAGE_NOT_FOUND("ERR_BIZ_401", "用法不存在"),
+    PART_NOT_FOUND("ERR_BIZ_402", "备件不存在"),
+
     ;
 
     private String code;

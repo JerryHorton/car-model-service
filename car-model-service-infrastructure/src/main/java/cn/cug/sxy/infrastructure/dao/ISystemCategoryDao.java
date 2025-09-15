@@ -78,4 +78,20 @@ public interface ISystemCategoryDao {
      */
     int countByCategoryCode(String categoryCode);
 
+    /**
+     * 根据ID物理删除系统大类
+     *
+     * @param id 大类ID
+     * @return 影响行数
+     */
+    int deleteById(Long id);
+
+    /**
+     * 根据ID逻辑删除系统大类（更新状态为DELETED）
+     *
+     * @param id 大类ID
+     * @return 影响行数
+     */
+    int logicalDeleteById(Long id);
+
 }

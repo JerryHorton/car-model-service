@@ -150,4 +150,17 @@ public interface IUsageManagementService {
      */
     void validateUsageCombinations(List<UsageConfigCombinationSpec> combinationSpecs);
 
+
+    /**
+     * 删除配置组合
+     * <p>
+     * 删除指定的配置组合及其关联的配置项
+     *
+     * @param combinationId 配置组合ID
+     * @return 是否删除成功
+     * @throws IllegalArgumentException 当参数无效时
+     * @throws AppException             当配置组合不存在时
+     */
+    boolean deleteCombination(Long combinationId);
+
 }

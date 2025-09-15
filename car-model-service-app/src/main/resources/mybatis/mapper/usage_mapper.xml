@@ -7,7 +7,6 @@
         <id column="id" property="id"/>
         <result column="usage_name" property="usageName"/>
         <result column="exploded_view_img" property="explodedViewImg"/>
-        <result column="download_url" property="downloadUrl"/>
         <result column="status" property="status"/>
         <result column="creator" property="creator"/>
         <result column="created_time" property="createdTime"/>
@@ -16,7 +15,7 @@
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, usage_name, exploded_view_img, download_url, status, creator, created_time, updated_time
+        id, usage_name, exploded_view_img, status, creator, created_time, updated_time
     </sql>
 
     <!-- 插入用法 -->
@@ -35,9 +34,6 @@
             </if>
             <if test="explodedViewImg != null and explodedViewImg.length() > 0">
                 exploded_view_img = #{explodedViewImg},
-            </if>
-            <if test="downloadUrl != null and downloadUrl.length() > 0">
-                download_url = #{downloadUrl},
             </if>
             <if test="status != null and status.length() > 0">
                 status = #{status},

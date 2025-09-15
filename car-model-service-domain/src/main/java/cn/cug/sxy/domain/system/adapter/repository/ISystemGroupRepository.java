@@ -3,6 +3,7 @@ package cn.cug.sxy.domain.system.adapter.repository;
 import cn.cug.sxy.domain.system.model.entity.SystemGroupEntity;
 import cn.cug.sxy.domain.system.model.valobj.CategoryId;
 import cn.cug.sxy.domain.system.model.valobj.GroupCode;
+import cn.cug.sxy.domain.system.model.valobj.GroupId;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,5 +78,37 @@ public interface ISystemGroupRepository {
      * @return 是否已存在
      */
     boolean existsByGroupCode(GroupCode groupCode);
+
+    /**
+     * 根据ID物理删除系统分组
+     *
+     * @param groupId 分组ID
+     * @return 删除的记录数
+     */
+    int deleteById(GroupId groupId);
+
+    /**
+     * 根据ID逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param groupId 分组ID
+     * @return 更新的记录数
+     */
+    int logicalDeleteById(GroupId groupId);
+
+    /**
+     * 根据大类ID物理删除系统分组
+     *
+     * @param categoryId 大类ID
+     * @return 删除的记录数
+     */
+    int deleteByCategoryId(CategoryId categoryId);
+
+    /**
+     * 根据大类ID逻辑删除系统分组（更新状态为DELETED）
+     *
+     * @param categoryId 大类ID
+     * @return 更新的记录数
+     */
+    int logicalDeleteByCategoryId(CategoryId categoryId);
 
 }

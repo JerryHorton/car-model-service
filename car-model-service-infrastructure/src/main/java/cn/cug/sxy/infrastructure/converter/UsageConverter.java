@@ -32,7 +32,6 @@ public class UsageConverter {
                 .id(new UsageId(po.getId()))
                 .usageName(po.getUsageName())
                 .explodedViewImg(po.getExplodedViewImg())
-                .downloadUrl(po.getDownloadUrl())
                 .status(Status.valueOf(po.getStatus()))
                 .creator(po.getCreator())
                 .createdTime(po.getCreatedTime())
@@ -54,7 +53,6 @@ public class UsageConverter {
         po.setId(entity.getId() == null ? null : entity.getId().getId());
         po.setUsageName(entity.getUsageName());
         po.setExplodedViewImg(entity.getExplodedViewImg());
-        po.setDownloadUrl(entity.getDownloadUrl());
         po.setStatus(entity.getStatus() != null ? entity.getStatus().getCode() : null);
         po.setCreator(entity.getCreator());
         po.setCreatedTime(entity.getCreatedTime());

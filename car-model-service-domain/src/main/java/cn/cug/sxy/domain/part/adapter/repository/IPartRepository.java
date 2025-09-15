@@ -84,14 +84,6 @@ public interface IPartRepository {
     List<PartEntity> findAll();
 
     /**
-     * 根据状态查询备件
-     *
-     * @param status 状态
-     * @return 备件列表
-     */
-    List<PartEntity> findByStatus(Status status);
-
-    /**
      * 读取备件工时Excel文件
      *
      * @param file Excel文件
@@ -115,14 +107,6 @@ public interface IPartRepository {
      * @return 是否绑定成功
      */
     boolean bindPartHour(PartId partId, String hourCode);
-
-    /**
-     * 根据备件ID查询绑定的工时ID列表
-     *
-     * @param partId 备件ID
-     * @return 工时ID列表
-     */
-    List<WorkHourId> findHourIdsByPartId(PartId partId);
 
     /**
      * 解绑工时

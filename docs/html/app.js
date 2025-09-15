@@ -100,9 +100,22 @@ const app = createApp({
         // 用法详情对话框
         const usageDetailDialog = reactive({
             visible: false,
-            data: null,
-            usageName: ''
+            usageId: null,
+            usageName: '',
+            status: '',
+            createdTime: '',
+            updatedTime: '',
+            combinations: [],
+            explodedViewImg: '',
+            relatedParts: [],
+            activeTab: 'basic'
         });
+        
+        // 关联备件加载状态
+        const relatedPartsLoading = ref(false);
+        
+        // 配置组合加载状态
+        const combinationsLoading = ref(false);
 
         // 图片查看对话框
         const imageDialog = reactive({
@@ -1202,14 +1215,215 @@ const app = createApp({
                 const data = await request(`/ap1/v1/usage/get_usage_detail?usageId=${row.id}`);
                 console.log('获取用法详情数据:', data);
 
-                usageDetailDialog.data = data;
+                usageDetailDialog.usageId = row.id;
                 usageDetailDialog.usageName = row.usageName;
+                usageDetailDialog.status = row.status;
+                usageDetailDialog.createdTime = row.createdTime;
+                usageDetailDialog.updatedTime = row.updatedTime;
+                usageDetailDialog.explodedViewImg = row.explodedViewImg;
+                usageDetailDialog.combinations = data?.combinations || [];
+                usageDetailDialog.activeTab = 'basic';
                 usageDetailDialog.visible = true;
+                
+                // 加载关联的备件
+                loadRelatedParts(row.id);
 
                 console.log('获取用法详情成功，配置组合数量:', data?.combinations?.length || 0);
             } catch (error) {
                 console.error('获取用法详情失败:', error);
                 ElMessage.error('获取详情失败: ' + (error.message || '未知错误'));
+            }
+        };
+        
+        // 加载用法关联的备件
+        const loadRelatedParts = async (usageId) => {
+            if (!usageId) return;
+            
+            try {
+                relatedPartsLoading.value = true;
+                const response = await request(`/api/v1/usage_part/list?usageId=${usageId}`);
+                usageDetailDialog.relatedParts = response || [];
+                console.log('已加载关联备件:', usageDetailDialog.relatedParts);
+            } catch (error) {
+                console.error('加载关联备件失败:', error);
+                ElMessage.error('加载关联备件失败: ' + error.message);
+            } finally {
+                relatedPartsLoading.value = false;
+            }
+        };
+        
+        // 搜索关联备件
+        const searchRelatedParts = () => {
+            if (!usageDetailDialog.relatedParts) return;
+            
+            const keyword = partSearch.keyword?.toLowerCase();
+            if (!keyword) {
+                // 如果没有关键词，重新加载所有备件
+                loadRelatedParts(usageDetailDialog.usageId);
+                return;
+            }
+            
+            // 本地过滤
+            const filteredParts = usageDetailDialog.relatedParts.filter(part => {
+                return part.partCode?.toLowerCase().includes(keyword) || 
+                       part.partName?.toLowerCase().includes(keyword);
+            });
+            
+            usageDetailDialog.relatedParts = filteredParts;
+        };
+        
+        // 解绑备件
+        const unbindPart = async (part) => {
+            try {
+                await ElMessageBox.confirm(`确定要解绑备件 ${part.partCode} - ${part.partName} 吗?`, '确认解绑', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                });
+                
+                // 创建请求体
+                const requestBody = {
+                    usageId: usageDetailDialog.usageId,
+                    partId: part.partId
+                };
+                
+                // 发送POST请求
+                await request('/api/v1/usage_part/unbind', {
+                    method: 'POST',
+                    body: JSON.stringify(requestBody)
+                });
+                
+                ElMessage.success('解绑成功');
+                
+                // 重新加载关联备件
+                loadRelatedParts(usageDetailDialog.usageId);
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('解绑备件失败:', error);
+                    ElMessage.error('解绑备件失败: ' + error.message);
+                }
+            }
+        };
+        
+        // 清空所有备件
+        const clearAllParts = async () => {
+            try {
+                await ElMessageBox.confirm('确定要清空所有关联的备件吗?', '确认清空', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                });
+                
+                const params = {
+                    usageId: usageDetailDialog.usageId
+                };
+                
+                await request('/api/v1/usage_part/clear', {
+                    method: 'POST',
+                    body: JSON.stringify(params)
+                });
+                
+                ElMessage.success('清空关联备件成功');
+                
+                // 重新加载关联备件
+                loadRelatedParts(usageDetailDialog.usageId);
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('清空关联备件失败:', error);
+                    ElMessage.error('清空关联备件失败: ' + error.message);
+                }
+            }
+        };
+        
+        // 下载备件模板
+        const downloadPartTemplate = async () => {
+            try {
+                // 使用原生fetch下载文件
+                const response = await fetch(`${API_BASE}/api/v1/usage_part/download_template`, {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`下载失败: ${response.status}`);
+                }
+                
+                // 获取文件blob
+                const blob = await response.blob();
+                
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = '用法备件关联模板.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                ElMessage.success('模板下载成功');
+            } catch (error) {
+                console.error('下载模板失败:', error);
+                ElMessage.error('下载模板失败: ' + error.message);
+            }
+        };
+        
+        // 上传文件前的验证
+        const beforePartUpload = (file) => {
+            // 验证文件类型
+            const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                            file.type === 'application/vnd.ms-excel';
+            if (!isExcel) {
+                ElMessage.error('只能上传Excel文件!');
+                return false;
+            }
+            
+            // 验证文件大小 (5MB)
+            const isLt5M = file.size / 1024 / 1024 < 5;
+            if (!isLt5M) {
+                ElMessage.error('文件大小不能超过5MB!');
+                return false;
+            }
+            
+            return true;
+        };
+        
+        // 上传备件关联
+        const uploadPartRelations = async (options) => {
+            try {
+                const { file } = options;
+                
+                // 创建FormData
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('usageId', usageDetailDialog.usageId);
+                
+                // 发送请求
+                const response = await request('/api/v1/usage_part/batch_upload', {
+                    method: 'POST',
+                    body: formData,
+                    isFormData: true
+                });
+                
+                // 显示上传结果
+                batchUploadResultDialog.results = response || [];
+                batchUploadResultDialog.visible = true;
+                
+                // 计算成功和失败数量
+                const successCount = response.filter(item => item.success).length;
+                const failCount = response.length - successCount;
+                
+                if (failCount === 0) {
+                    ElMessage.success(`成功导入 ${successCount} 条记录`);
+                } else {
+                    ElMessage.warning(`导入完成：成功 ${successCount} 条，失败 ${failCount} 条`);
+                }
+                
+                // 重新加载关联备件
+                loadRelatedParts(usageDetailDialog.usageId);
+            } catch (error) {
+                console.error('上传备件关联失败:', error);
+                ElMessage.error('上传备件关联失败: ' + error.message);
             }
         };
 
@@ -1221,6 +1435,72 @@ const app = createApp({
                 console.log('查看爆炸图:', row.downloadUrl);
             } else {
                 ElMessage.warning('该用法没有爆炸图');
+            }
+        };
+        
+        // 查看配置组合详情
+        const viewCombinationDetails = (combination) => {
+            try {
+                console.log('查看配置组合详情:', combination);
+                // 弹出对话框显示配置项明细
+                ElMessageBox.alert(
+                    `<div class="combination-details">
+                        <h3>配置组合: ${combination.combinationName}</h3>
+                        <div class="config-items">
+                            ${combination.configItems && combination.configItems.length > 0 
+                                ? combination.configItems.map(item => 
+                                    `<div class="config-item">
+                                        <span class="item-name">${item.itemName}:</span>
+                                        <span class="item-value">${item.itemValue}</span>
+                                    </div>`
+                                ).join('')
+                                : '<p>暂无配置项</p>'
+                            }
+                        </div>
+                    </div>`,
+                    '配置组合详情',
+                    {
+                        dangerouslyUseHTMLString: true,
+                        confirmButtonText: '关闭'
+                    }
+                );
+            } catch (error) {
+                console.error('查看配置组合详情失败:', error);
+                ElMessage.error('查看配置组合详情失败: ' + error.message);
+            }
+        };
+        
+        // 删除配置组合
+        const deleteCombination = async (combination) => {
+            try {
+                await ElMessageBox.confirm(
+                    `确定要删除配置组合"${combination.combinationName}"吗？此操作不可恢复。`,
+                    '删除确认',
+                    {
+                        confirmButtonText: '确定删除',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                
+                console.log('删除配置组合:', combination.id);
+                // 发送请求删除配置组合
+                await request(`/ap1/v1/usage/delete_combination?combinationId=${combination.id}`, {
+                    method: 'POST'
+                });
+                
+                // 从列表中移除该组合
+                const index = usageDetailDialog.combinations.findIndex(item => item.id === combination.id);
+                if (index !== -1) {
+                    usageDetailDialog.combinations.splice(index, 1);
+                }
+                
+                ElMessage.success('删除配置组合成功');
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('删除配置组合失败:', error);
+                    ElMessage.error('删除配置组合失败: ' + error.message);
+                }
             }
         };
 
@@ -4090,6 +4370,20 @@ const viewPartDetail = async (part) => {
             loadConfigItemsForCategory,
             removeConfigItem,
             getConfigItemName,
+            viewCombinationDetails,
+            deleteCombination,
+            
+            // 用法备件关联方法
+            relatedPartsLoading,
+            combinationsLoading,
+            batchUploadResultDialog,
+            loadRelatedParts,
+            searchRelatedParts,
+            unbindPart,
+            clearAllParts,
+            downloadPartTemplate,
+            beforePartUpload,
+            uploadPartRelations,
 
             // 模板管理方法
             queryTemplates,

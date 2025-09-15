@@ -7,6 +7,7 @@ import cn.cug.sxy.domain.system.model.valobj.CategoryId;
 import cn.cug.sxy.infrastructure.converter.SystemCategoryConverter;
 import cn.cug.sxy.infrastructure.dao.ISystemCategoryDao;
 import cn.cug.sxy.infrastructure.dao.po.SystemCategoryPO;
+import cn.cug.sxy.infrastructure.redis.IRedisService;
 import cn.cug.sxy.types.common.Constants;
 import org.springframework.stereotype.Repository;
 
@@ -25,9 +26,13 @@ import java.util.Optional;
 public class SystemCategoryRepository extends AbstractRepository implements ISystemCategoryRepository {
 
     private final ISystemCategoryDao systemCategoryDao;
+    private final IRedisService redisService;
 
-    public SystemCategoryRepository(ISystemCategoryDao systemCategoryDao) {
+    public SystemCategoryRepository(
+            ISystemCategoryDao systemCategoryDao,
+            IRedisService redisService) {
         this.systemCategoryDao = systemCategoryDao;
+        this.redisService = redisService;
     }
 
     @Override
@@ -45,7 +50,7 @@ public class SystemCategoryRepository extends AbstractRepository implements ISys
         if (categoryId == null) {
             return Optional.empty();
         }
-        String cacheKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + categoryId.getId();
+        String cacheKey = Constants.RedisKey.SYS_CATEGORY_BY_ID_KEY + categoryId.getId();
         SystemCategoryPO systemCategoryPO = getDataFromCacheOrDB(cacheKey, () -> systemCategoryDao.selectById(categoryId.getId()));
         if (systemCategoryPO == null) {
             return Optional.empty();
@@ -115,6 +120,34 @@ public class SystemCategoryRepository extends AbstractRepository implements ISys
             return false;
         }
         return systemCategoryDao.countByCategoryCode(categoryCode.getCode()) > 0;
+    }
+
+    @Override
+    public int deleteById(CategoryId categoryId) {
+        if (categoryId == null) {
+            return 0;
+        }
+        // 删除缓存
+        String cacheKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + categoryId.getId();
+        // 清除所有类别缓存，因为列表已变更
+        redisService.remove(cacheKey);
+        redisService.remove(Constants.RedisKey.SYS_CATEGORY_ALL_KEY);
+        // 执行删除
+        return systemCategoryDao.deleteById(categoryId.getId());
+    }
+
+    @Override
+    public int logicalDeleteById(CategoryId categoryId) {
+        if (categoryId == null) {
+            return 0;
+        }
+        // 删除缓存
+        String cacheKey = Constants.RedisKey.SYS_GROUP_BY_CATEGORY_ID_KEY + categoryId.getId();
+        redisService.remove(cacheKey);
+        // 清除所有类别缓存，因为列表已变更
+        redisService.remove(Constants.RedisKey.SYS_CATEGORY_ALL_KEY);
+        // 执行逻辑删除
+        return systemCategoryDao.logicalDeleteById(categoryId.getId());
     }
 
 }

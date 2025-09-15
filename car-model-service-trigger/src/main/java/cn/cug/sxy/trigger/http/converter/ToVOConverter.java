@@ -3,8 +3,14 @@ package cn.cug.sxy.trigger.http.converter;
 import cn.cug.sxy.api.vo.*;
 import cn.cug.sxy.domain.part.model.entity.PartBindHourResultEntity;
 import cn.cug.sxy.domain.part.model.entity.PartEntity;
+import cn.cug.sxy.domain.part.model.entity.UsageBindPartResultEntity;
+import cn.cug.sxy.domain.system.model.entity.SystemCategoryEntity;
+import cn.cug.sxy.domain.system.model.entity.SystemGroupEntity;
+import cn.cug.sxy.domain.system.service.ISystemCategoryService;
+import cn.cug.sxy.domain.usage.model.entity.UsagePartEntity;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourBatchUploadResultEntity;
 import cn.cug.sxy.domain.workhour.model.entity.WorkHourEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,12 +22,19 @@ import java.util.stream.Collectors;
  * @Author jerryhotton
  */
 
+@Component
 public class ToVOConverter {
+
+    private final ISystemCategoryService systemCategoryService;
+
+    public ToVOConverter(ISystemCategoryService systemCategoryService) {
+        this.systemCategoryService = systemCategoryService;
+    }
 
     /**
      * 将批量绑定结果实体转换为VO
      */
-    public static PartBindHourResultVO convertToPartBindHourResultVO(PartBindHourResultEntity entity) {
+    public PartBindHourResultVO convertToPartBindHourResultVO(PartBindHourResultEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -38,7 +51,7 @@ public class ToVOConverter {
     /**
      * 将备件实体转换为VO
      */
-    public static PartVO convertToPartVO(PartEntity entity) {
+    public PartVO convertToPartVO(PartEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -56,20 +69,20 @@ public class ToVOConverter {
     /**
      * 将备件实体列表转换为VO列表
      */
-    public static List<PartVO> convertToPartVOList(List<PartEntity> entities) {
+    public List<PartVO> convertToPartVOList(List<PartEntity> entities) {
         if (entities == null) {
             return List.of();
         }
 
         return entities.stream()
-                .map(ToVOConverter::convertToPartVO)
+                .map(this::convertToPartVO)
                 .collect(Collectors.toList());
     }
 
     /**
      * 转换工时实体为VO
      */
-    public static WorkHourVO convertToWorkHourVO(WorkHourEntity entity) {
+    public WorkHourVO convertToWorkHourVO(WorkHourEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -93,7 +106,7 @@ public class ToVOConverter {
     /**
      * 转换工时实体为VO
      */
-    public static WorkHourTreeVO convertToWorkHourTreeVO(WorkHourEntity entity) {
+    public WorkHourTreeVO convertToWorkHourTreeVO(WorkHourEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -103,7 +116,7 @@ public class ToVOConverter {
         // 递归转换子工时
         if (entity.getChildren() != null && !entity.getChildren().isEmpty()) {
             List<WorkHourVO> childrenVOs = entity.getChildren().stream()
-                    .map(ToVOConverter::convertToWorkHourVO)
+                    .map(this::convertToWorkHourVO)
                     .collect(Collectors.toList());
             workHourTreeVO.setChildren(childrenVOs);
         }
@@ -114,7 +127,7 @@ public class ToVOConverter {
     /**
      * 转换批量上传结果实体为VO
      */
-    public static WorkHourBatchUploadResultVO convertToWorkHourBatchUploadResultVO(WorkHourBatchUploadResultEntity entity) {
+    public WorkHourBatchUploadResultVO convertToWorkHourBatchUploadResultVO(WorkHourBatchUploadResultEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -129,6 +142,104 @@ public class ToVOConverter {
                 .errorMessage(entity.getErrorMessage())
                 .workHourId(entity.getWorkHourId())
                 .build();
+    }
+
+    /**
+     * 转换用法备件关联实体为VO
+     */
+    public UsagePartVO convertToUsagePartVO(UsagePartEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return UsagePartVO.builder()
+                .usageId(entity.getUsageId() != null ? entity.getUsageId().getId() : null)
+                .partId(entity.getPartId() != null ? entity.getPartId().getId() : null)
+                .partCode(entity.getPartCode())
+                .partName(entity.getPartName())
+                .count(entity.getCount())
+                .build();
+    }
+
+    /**
+     * 转换用法备件关联实体列表为VO列表
+     */
+    public List<UsagePartVO> convertToUsagePartVOList(List<UsagePartEntity> entities) {
+        if (entities == null) {
+            return List.of();
+        }
+
+        return entities.stream()
+                .map(this::convertToUsagePartVO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 转换用法备件批量上传结果实体为VO
+     */
+    public UsageBindPartResultVO convertToUsageBindPartResultVO(UsageBindPartResultEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return UsageBindPartResultVO.builder()
+                .rowNumber(entity.getRowNumber())
+                .partCode(entity.getPartCode())
+                .count(entity.getCount())
+                .success(entity.getSuccess())
+                .errorMessage(entity.getErrorMessage())
+                .partId(entity.getPartId())
+                .usageId(entity.getUsageId())
+                .build();
+    }
+
+    /**
+     * 转换系统大类实体为VO
+     */
+    public SystemCategoryVO convertToCategoryVO(SystemCategoryEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        SystemCategoryVO vo = new SystemCategoryVO();
+        vo.setId(entity.getCategoryId().getId());
+        vo.setCategoryCode(entity.getCategoryCode().getCode());
+        vo.setCategoryName(entity.getCategoryName());
+        vo.setCategoryNameEn(entity.getCategoryNameEn());
+        vo.setSortOrder(entity.getSortOrder());
+        vo.setStatus(entity.getStatus().name());
+        vo.setCreator(entity.getCreator());
+
+        return vo;
+    }
+
+    /**
+     * 转换系统分组实体为VO
+     */
+    public SystemGroupVO convertToGroupVO(SystemGroupEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        // 查询所属大类信息
+        SystemCategoryEntity categoryEntity = null;
+        if (entity.getCategoryId() != null) {
+            categoryEntity = systemCategoryService.findById(entity.getCategoryId());
+        }
+        SystemGroupVO vo = new SystemGroupVO();
+        vo.setId(entity.getGroupId().getId());
+        vo.setCategoryId(entity.getCategoryId().getId());
+        vo.setGroupCode(entity.getGroupCode().getCode());
+        vo.setGroupName(entity.getGroupName());
+        vo.setGroupNameEn(entity.getGroupNameEn());
+        vo.setSortOrder(entity.getSortOrder());
+        vo.setStatus(entity.getStatus().name());
+        vo.setCreator(entity.getCreator());
+        // 设置大类相关信息
+        if (categoryEntity != null) {
+            vo.setCategoryCode(categoryEntity.getCategoryCode().getCode());
+            vo.setCategoryName(categoryEntity.getCategoryName());
+        }
+
+        return vo;
     }
 
 }

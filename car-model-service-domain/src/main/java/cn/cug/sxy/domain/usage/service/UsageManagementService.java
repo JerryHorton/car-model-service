@@ -9,12 +9,9 @@ import cn.cug.sxy.domain.usage.adapter.repository.IUsageConfigCombinationReposit
 import cn.cug.sxy.domain.usage.adapter.repository.IUsageRepository;
 import cn.cug.sxy.domain.usage.model.aggregate.UsageAggregate;
 import cn.cug.sxy.domain.usage.model.entity.ConfigItemEntity;
-import cn.cug.sxy.domain.usage.model.valobj.ConfigItemId;
-import cn.cug.sxy.domain.usage.model.valobj.UsageCreationAggregate;
+import cn.cug.sxy.domain.usage.model.valobj.*;
 import cn.cug.sxy.domain.usage.model.entity.UsageConfigCombinationEntity;
 import cn.cug.sxy.domain.usage.model.entity.UsageEntity;
-import cn.cug.sxy.domain.usage.model.valobj.UsageConfigCombinationSpec;
-import cn.cug.sxy.domain.usage.model.valobj.UsageId;
 import cn.cug.sxy.types.enums.Status;
 import cn.cug.sxy.types.exception.AppException;
 import org.springframework.stereotype.Service;
@@ -214,6 +211,11 @@ public class UsageManagementService implements IUsageManagementService {
                 throw new AppException("配置组合中存在同类别的多个配置项");
             }
         }
+    }
+
+    @Override
+    public boolean deleteCombination(Long combinationId) {
+        return combinationRepository.deleteById(new UsageConfigCombinationId(combinationId));
     }
 
     private List<UsageEntity> findUsagesByGroup(Long groupNodeId, Status status) {

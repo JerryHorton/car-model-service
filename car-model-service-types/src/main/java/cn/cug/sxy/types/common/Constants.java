@@ -17,6 +17,7 @@ public class Constants {
         public static final String CAR_SERIES_BY_CODE_KEY = "car_series:car_series_by_code_key_";
         public static final String CAR_SERIES_BY_BRAND_KEY = "car_series:car_series_by_brand_key_";
 
+        public static final String SYS_CATEGORY_BY_ID_KEY = "sys_category:sys_category_by_id_key_";
         public static final String SYS_CATEGORY_BY_CODE_KEY = "sys_category:sys_category_by_code_key_";
         public static final String SYS_CATEGORY_ALL_KEY = "sys_category:sys_category_all_key_";
 
@@ -43,6 +44,7 @@ public class Constants {
         public static final String INSTANCE_STRUCTURE_NODE_BY_ID_KEY = "instance_structure:instance_structure_node_by_id_key_";
         public static final String INSTANCE_STRUCTURE_NODES_BY_PARENT_ID_KEY = "instance_structure:instance_structure_nodes_by_parent_id_key_";
         public static final String INSTANCE_STRUCTURE_NODES_BY_INSTANCE_ID_KEY = "instance_structure:instance_structure_nodes_by_instance_id_key_";
+
     }
 
 }
